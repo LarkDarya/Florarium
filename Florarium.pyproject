@@ -6,6 +6,8 @@
         "admin/admin_window.py",
         "admin_controller.py",
         "admin_window.py",
+        "backup.py",
+        "backup_manager.py",
         "database.py",
         "login_window.py",
         "models.py",
