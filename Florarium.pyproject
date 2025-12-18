@@ -2,6 +2,7 @@
     "files": [
         "database.py",
         "models.py",
+        "service.py",
         "widget.py"
     ]
 }
