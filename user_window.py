@@ -1920,3 +1920,1434 @@ class UserWindow(QWidget):
         self.load_my_plants()
 
 
+    def create_journal_page(self):
+        """Создать страницу журнала ухода"""
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setSpacing(20)
+
+        # Панель управления
+        control_container = QFrame()
+        control_container.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 12px;
+                padding: 15px;
+                border: 2px solid #E8F5E9;
+            }
+        """)
+
+        control_layout = QHBoxLayout(control_container)
+        control_layout.setContentsMargins(10, 10, 10, 10)
+
+        # Заголовок
+        header_label = QLabel("📓 Журнал ухода")
+        header_label.setStyleSheet("""
+            QLabel {
+                font-weight: bold;
+                font-size: 18px;
+                color: #2C3E50;
+                padding-right: 20px;
+            }
+        """)
+        control_layout.addWidget(header_label)
+
+        # Стиль кнопок
+        button_style = """
+            QPushButton {
+                background-color: #93a267;
+                color: white;
+                border: none;
+                padding: 0 20px;
+                border-radius: 8px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 100px;
+                height: 40px;
+            }
+            QPushButton:hover {
+                background-color: #7a8a53;
+            }
+            QPushButton:pressed {
+                background-color: #6a7949;
+            }
+        """
+
+        delete_button_style = button_style.replace("#93a267", "#e74c3c") \
+                                         .replace("#7a8a53", "#c0392b") \
+                                         .replace("#6a7949", "#a93226")
+
+        # Кнопки управления
+        self.btn_add_journal = QPushButton("➕ Добавить")
+        self.btn_add_journal.setStyleSheet(button_style)
+
+        self.btn_edit_journal = QPushButton("✏️ Редактировать")
+        self.btn_edit_journal.setStyleSheet(button_style)
+
+        self.btn_delete_journal = QPushButton("🗑️ Удалить")
+        self.btn_delete_journal.setStyleSheet(delete_button_style)
+
+        self.btn_refresh_journal = QPushButton("🔄 Обновить")
+        self.btn_refresh_journal.setStyleSheet(button_style)
+
+        control_layout.addWidget(self.btn_add_journal)
+        control_layout.addWidget(self.btn_edit_journal)
+        control_layout.addWidget(self.btn_delete_journal)
+        control_layout.addWidget(self.btn_refresh_journal)
+        control_layout.addStretch()
+
+        layout.addWidget(control_container)
+
+        # Панель поиска
+        search_container = QFrame()
+        search_container.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 12px;
+                padding: 15px;
+                border: 2px solid #E8F5E9;
+            }
+        """)
+
+        search_layout = QHBoxLayout(search_container)
+        search_layout.setContentsMargins(10, 10, 10, 10)
+
+        # Заголовок поиска
+        search_header = QLabel("🔍 Поиск в журнале")
+        search_header.setStyleSheet("""
+            QLabel {
+                font-weight: bold;
+                font-size: 16px;
+                color: #2C3E50;
+                padding-right: 15px;
+            }
+        """)
+        search_layout.addWidget(search_header)
+
+        # Поле поиска
+        self.journal_search_input = QLineEdit()
+        self.journal_search_input.setPlaceholderText("Поиск по заметкам, типу ухода...")
+        self.journal_search_input.setMinimumHeight(40)
+        self.journal_search_input.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 8px;
+                font-size: 14px;
+                background-color: white;
+                selection-background-color: #93a267;
+            }
+            QLineEdit:focus {
+                border: 2px solid #1ABC9C;
+            }
+            QLineEdit::placeholder {
+                color: #95A5A6;
+                font-style: italic;
+            }
+        """)
+        search_layout.addWidget(self.journal_search_input, 3)
+
+        # Кнопки поиска
+        self.btn_search_journal = QPushButton("🔍 Найти")
+        self.btn_search_journal.setStyleSheet(button_style)
+
+        self.btn_clear_journal = QPushButton("🗑️ Сбросить")
+        self.btn_clear_journal.setStyleSheet(button_style.replace("#93a267", "#95A5A6")
+                                                         .replace("#7a8a53", "#7F8C8D")
+                                                         .replace("#6a7949", "#6C7A89"))
+
+        search_layout.addWidget(self.btn_search_journal)
+        search_layout.addWidget(self.btn_clear_journal)
+
+        layout.addWidget(search_container)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QScrollArea.NoFrame)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #F0F0F0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
+        # Контейнер для карточек журнала
+        self.journal_cards_container = QWidget()
+        self.journal_cards_layout = QVBoxLayout(self.journal_cards_container)
+        self.journal_cards_layout.setSpacing(10)
+        self.journal_cards_layout.setContentsMargins(10, 10, 10, 10)
+        self.journal_cards_layout.setAlignment(Qt.AlignTop)
+
+        scroll_area.setWidget(self.journal_cards_container)
+        layout.addWidget(scroll_area, 1)
+
+        # Подключение сигналов
+        self.btn_add_journal.clicked.connect(self.add_journal_dialog)
+        self.btn_edit_journal.clicked.connect(self.edit_journal_entry)
+        self.btn_delete_journal.clicked.connect(self.delete_journal_entry)
+        self.btn_refresh_journal.clicked.connect(self.load_journal_cards)
+        self.btn_search_journal.clicked.connect(self.search_journal)
+        self.btn_clear_journal.clicked.connect(self.clear_journal_search)
+
+        def on_journal_container_click(event):
+            if hasattr(self, 'selected_journal_card'):
+                self.clear_journal_selection()
+
+        self.journal_cards_container.mousePressEvent = on_journal_container_click
+
+        self.stacked_widget.addWidget(page)
+
+    def create_journal_card(self, journal_data):
+        """Создать горизонтальную карточку для записи журнала с кнопкой 'Подробнее'"""
+        card = QFrame()
+        card.setFixedHeight(100)
+        card.setMinimumWidth(400)
+
+        # Проверяем, выбрана ли эта карточка
+        is_selected = hasattr(self, 'selected_journal_card') and self.selected_journal_card == journal_data.get('id')
+
+        if is_selected:
+            card_style = """
+                QFrame {
+                    background-color: white;
+                    border: 3px solid #93a267;
+                    border-radius: 10px;
+                    padding: 0px;
+                }
+            """
+        else:
+            card_style = """
+                QFrame {
+                    background-color: white;
+                    border: 1px solid #E0E0E0;
+                    border-radius: 10px;
+                    padding: 0px;
+                }
+                QFrame:hover {
+                    background-color: #F8F9FA;
+                    border: 1px solid #93a267;
+                }
+            """
+
+        card.setStyleSheet(card_style)
+        card.setCursor(Qt.PointingHandCursor)
+
+        # Сохраняем ID записи в объекте карточки
+        card.journal_id = journal_data.get('id')
+        card.journal_data = journal_data
+
+        card_layout = QHBoxLayout(card)
+        card_layout.setContentsMargins(15, 10, 15, 10)
+        card_layout.setSpacing(15)
+
+        # Иконка в зависимости от типа ухода
+        care_type_icons = {
+            "Полив": "💦",
+            "Удобрение": "🧪",
+            "Пересадка": "🔄",
+            "Обрезка": "✂️",
+            "Опрыскивание": "💨",
+            "Другое": "📝"
+        }
+
+        care_type = journal_data.get('care_type', 'Другое')
+        icon_text = care_type_icons.get(care_type, "📝")
+
+        # Иконка
+        icon_frame = QFrame()
+        icon_frame.setFixedSize(50, 50)
+        icon_frame.setStyleSheet("""
+            QFrame {
+                background-color: #E8F5E9;
+                border-radius: 25px;
+            }
+        """)
+        icon_layout = QVBoxLayout(icon_frame)
+        icon_layout.setAlignment(Qt.AlignCenter)
+        icon_label = QLabel(icon_text)
+        icon_label.setStyleSheet("""
+            QLabel {
+                font-size: 20px;
+            }
+        """)
+        icon_layout.addWidget(icon_label)
+        card_layout.addWidget(icon_frame)
+
+        # Основная информация
+        info_layout = QVBoxLayout()
+        info_layout.setSpacing(5)
+        info_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Дата и время
+        date_text = "Дата неизвестна"
+        if journal_data.get('care_date'):
+            try:
+                from datetime import datetime, date
+
+                care_date = journal_data['care_date']
+
+                if isinstance(care_date, datetime):
+                    date_text = care_date.strftime('%d.%m.%Y')
+                elif isinstance(care_date, date):
+                    date_text = care_date.strftime('%d.%m.%Y')
+                elif isinstance(care_date, str):
+                    try:
+                        for fmt in ['%Y-%m-%d', '%Y-%m-%d %H:%M:%S', '%d.%m.%Y', '%d.%m.%Y %H:%M']:
+                            try:
+                                parsed_date = datetime.strptime(care_date, fmt)
+                                date_text = parsed_date.strftime('%d.%m.%Y')
+                                break
+                            except:
+                                continue
+                    except:
+                        date_text = care_date[:10] if len(care_date) >= 10 else care_date
+            except Exception as e:
+                print(f"Ошибка форматирования даты: {e}")
+                date_text = str(journal_data['care_date'])[:10]
+
+        date_label = QLabel(f"📅 {date_text}")
+        date_label.setStyleSheet("""
+            QLabel {
+                font-size: 12px;
+                color: #7F8C8D;
+            }
+        """)
+        info_layout.addWidget(date_label)
+
+        # Растение и тип ухода
+        plant_text = journal_data.get('plant_name', 'Неизвестное растение')
+        main_label = QLabel(f"🌿 <b>{plant_text}</b>  |  🛠️ {care_type}")
+        main_label.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #2C3E50;
+            }
+        """)
+        main_label.setWordWrap(True)
+        info_layout.addWidget(main_label)
+
+        # Краткие заметки
+        notes = journal_data.get('description', journal_data.get('notes', ''))
+        if notes and notes.strip():
+            notes_preview = notes[:30] + "..." if len(notes) > 30 else notes
+            notes_label = QLabel(f"📌 {notes_preview}")
+            notes_label.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    color: #485935;
+                    font-style: italic;
+                }
+            """)
+            notes_label.setWordWrap(True)
+            info_layout.addWidget(notes_label)
+
+        card_layout.addLayout(info_layout, 1)  # 1 = растягивается
+
+        # Кнопка "Подробнее"
+        details_btn = QPushButton("🔍 Подробнее")
+        details_btn.setFixedSize(100, 30)
+        details_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #93a267;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #71804e;
+            }
+            QPushButton:pressed {
+                background-color: #5a663c;
+            }
+        """)
+        details_btn.clicked.connect(lambda: self.show_journal_details(journal_data))
+        card_layout.addWidget(details_btn)
+
+        # Обработчик клика на всю карточку
+        def on_card_click(event):
+            event.accept()
+            if hasattr(self, 'selected_journal_card') and self.selected_journal_card == card.journal_id:
+                self.clear_journal_selection()
+            else:
+                self.selected_journal_card = card.journal_id
+                self.selected_journal_data = card.journal_data
+                self.update_journal_cards_style()
+
+        card.mousePressEvent = on_card_click
+
+        return card
+
+    def show_journal_details(self, journal_data):
+        """Показать детали записи журнала в отдельном окне"""
+        dialog = self.create_details_style_dialog("📓 Детали записи журнала", 500, 400)
+
+        try:
+            # Получаем полную запись из базы
+            journal_record = self.service.CareJournal.get_by_id(journal_data['id'])
+
+            # Получаем растение
+            plant_name = journal_data.get('plant_name', 'Неизвестное растение')
+            try:
+                if journal_record.instance:
+                    plant = journal_record.instance
+                    if plant.nickname and plant.nickname != 'None':
+                        plant_name = plant.nickname
+                    elif hasattr(plant, 'plant') and plant.plant:
+                        if hasattr(plant.plant, 'scientific_name'):
+                            plant_name = plant.plant.scientific_name
+            except:
+                pass
+
+            date_text = "Дата неизвестна"
+            if journal_record.care_date:
+                try:
+                    from datetime import datetime, date
+
+                    care_date = journal_record.care_date
+
+                    if isinstance(care_date, datetime):
+                        date_text = care_date.strftime('%d.%m.%Y %H:%M')
+                    elif isinstance(care_date, date):
+                        date_text = care_date.strftime('%d.%m.%Y')
+                    elif isinstance(care_date, str):
+                        date_text = care_date[:19] if len(care_date) >= 19 else care_date
+                except Exception as e:
+                    print(f"Ошибка форматирования даты: {e}")
+                    date_text = str(journal_record.care_date)
+
+            # Создаем информационные блоки
+            info_style = """
+                font-size: 14px;
+                color: #34495E;
+                padding: 12px;
+                background-color: white;
+                border-radius: 8px;
+                border: 1px solid #DDD;
+                line-height: 1.4;
+            """
+
+            # Растение
+            plant_label = QLabel(f"<b>🌿 Растение:</b> {plant_name}")
+            plant_label.setStyleSheet(info_style)
+            self.dialog_content_layout.addWidget(plant_label)
+
+            # Тип ухода
+            type_label = QLabel(f"<b>🛠️ Тип ухода:</b> {journal_record.care_type or 'Не указан'}")
+            type_label.setStyleSheet(info_style)
+            self.dialog_content_layout.addWidget(type_label)
+
+            # Дата и время
+            date_label = QLabel(f"<b>📅 Дата и время:</b> {date_text}")
+            date_label.setStyleSheet(info_style)
+            self.dialog_content_layout.addWidget(date_label)
+
+            # Описание
+            description = journal_record.description or ""
+            if description:
+                notes_label = QLabel(f"<b>📝 Заметки:</b><br>{description}")
+                notes_label.setWordWrap(True)
+                notes_label.setStyleSheet(info_style)
+                self.dialog_content_layout.addWidget(notes_label)
+
+            self.dialog_content_layout.addStretch()
+
+            # Кнопка закрытия
+            btn_close = QPushButton("Закрыть")
+            btn_close.setFixedHeight(40)
+            btn_close.setStyleSheet("""
+                QPushButton {
+                    background-color: #93a267;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    min-width: 100px;
+                }
+                QPushButton:hover {
+                    background-color: #71804e;
+                }
+                QPushButton:pressed {
+                    background-color: #5a663c;
+                }
+            """)
+            btn_close.clicked.connect(dialog.accept)
+
+            # Добавляем кнопку в layout
+            self.dialog_button_layout.addStretch()
+            self.dialog_button_layout.addWidget(btn_close)
+
+            # Центрируем окно
+            dialog.move(
+                self.x() + (self.width() - dialog.width()) // 2,
+                self.y() + (self.height() - dialog.height()) // 2
+            )
+
+            dialog.exec()
+
+        except Exception as e:
+            error_label = QLabel(f"Ошибка загрузки данных записи: {str(e)}")
+            error_label.setStyleSheet("color: #E74C3C; font-weight: bold; padding: 10px;")
+            self.dialog_content_layout.addWidget(error_label)
+
+    def clear_journal_selection(self):
+        """Сбросить выделение карточки журнала"""
+        if hasattr(self, 'selected_journal_card'):
+            delattr(self, 'selected_journal_card')
+        if hasattr(self, 'selected_journal_data'):
+            delattr(self, 'selected_journal_data')
+        self.update_journal_cards_style()
+
+    def update_journal_cards_style(self):
+        """Обновить стили всех карточек журнала (подсветить выбранную)"""
+        for i in range(self.journal_cards_layout.count()):
+            widget = self.journal_cards_layout.itemAt(i).widget()
+            if widget and hasattr(widget, 'journal_id'):
+                is_selected = hasattr(self, 'selected_journal_card') and self.selected_journal_card == widget.journal_id
+                if is_selected:
+                    widget.setStyleSheet("""
+                        QFrame {
+                            background-color: white;
+                            border: 3px solid #93a267;
+                            border-radius: 10px;
+                            padding: 0px;
+                        }
+                    """)
+                else:
+                    widget.setStyleSheet("""
+                        QFrame {
+                            background-color: white;
+                            border: 1px solid #E0E0E0;
+                            border-radius: 10px;
+                            padding: 0px;
+                        }
+                        QFrame:hover {
+                            background-color: #F8F9FA;
+                            border: 1px solid #93a267;
+                        }
+                    """)
+
+    def search_journal(self):
+        """Поиск в журнале"""
+        search_text = self.journal_search_input.text().strip()
+        if not search_text:
+            self.load_journal_cards()
+            return
+
+        try:
+            # Ищем записи журнала
+            records = list(self.service.CareJournal.select().where(
+                (self.service.CareJournal.user == self.user_id) &
+                (
+                    (self.service.CareJournal.care_type.contains(search_text)) |
+                    (self.service.CareJournal.description.contains(search_text))
+                )
+            ).order_by(self.service.CareJournal.care_date.desc()))
+
+            self.display_journal_cards(records)
+        except Exception as e:
+            print(f"Ошибка поиска в журнале: {e}")
+            self.show_error_message("Ошибка", f"Ошибка поиска: {str(e)}")
+
+    def clear_journal_search(self):
+        """Очистка поиска в журнале"""
+        self.journal_search_input.clear()
+        self.load_journal_cards()
+
+
+    def load_plant_combo(self):
+        """Загрузить растения пользователя в комбобокс журнала"""
+        try:
+            my_plants = list(self.service.PlantInstance.select().where(
+                self.service.PlantInstance.user == self.user_id
+            ))
+
+            if len(my_plants) == 0:
+                print("У пользователя нет растений для журнала")
+                return False
+            else:
+                print(f"У пользователя {len(my_plants)} растений для журнала")
+                return True
+
+        except Exception as e:
+            print(f"Ошибка проверки растений для журнала: {e}")
+            return False
+
+    def load_journal_cards(self):
+        """Загрузить записи журнала в виде карточек"""
+        try:
+            # Очищаем контейнер
+            for i in reversed(range(self.journal_cards_layout.count())):
+                widget = self.journal_cards_layout.itemAt(i).widget()
+                if widget:
+                    widget.deleteLater()
+
+            # Получаем записи журнала
+            records = list(self.service.CareJournal.select().where(
+                self.service.CareJournal.user == self.user_id
+            ).order_by(self.service.CareJournal.care_date.desc()))
+
+            if not records:
+                # Сообщение если нет записей
+                empty_label = QLabel("📝 Нет записей в журнале\nДобавьте первую запись")
+                empty_label.setStyleSheet("""
+                    QLabel {
+                        color: #7F8C8D;
+                        font-size: 16px;
+                        font-weight: bold;
+                        padding: 40px;
+                        text-align: center;
+                    }
+                """)
+                empty_label.setAlignment(Qt.AlignCenter)
+                self.journal_cards_layout.addWidget(empty_label)
+                return
+
+            # Создаем карточки для каждой записи
+            for record in records:
+                try:
+                    journal_data = {
+                        'id': record.id,
+                        'care_type': record.care_type or "Другое",
+                        'care_date': record.care_date,
+                        'description': record.description or "",
+                    }
+
+                    # Получаем имя растения
+                    plant_name = "Неизвестное растение"
+                    if hasattr(record, 'instance') and record.instance:
+                        try:
+                            plant = record.instance
+                            if plant.nickname and plant.nickname != 'None':
+                                plant_name = plant.nickname
+                            elif hasattr(plant, 'plant') and plant.plant:
+                                if hasattr(plant.plant, 'scientific_name'):
+                                    plant_name = plant.plant.scientific_name
+                        except:
+                            pass
+
+                    journal_data['plant_name'] = plant_name
+
+                    # Создаем карточку
+                    card = self.create_journal_card(journal_data)
+                    self.journal_cards_layout.addWidget(card)
+
+                except Exception as card_e:
+                    print(f"Ошибка создания карточки: {card_e}")
+                    continue
+
+            self.journal_cards_layout.addStretch()
+
+        except Exception as e:
+            print(f"Ошибка загрузки журнала: {e}")
+            error_label = QLabel("⚠️ Ошибка загрузки журнала")
+            error_label.setStyleSheet("""
+                QLabel {
+                    color: #e74c3c;
+                    font-size: 14px;
+                    font-weight: bold;
+                    padding: 20px;
+                    text-align: center;
+                }
+            """)
+            error_label.setAlignment(Qt.AlignCenter)
+            self.journal_cards_layout.addWidget(error_label)
+
+    def display_journal_cards(self, records):
+        """Отобразить записи журнала в виде карточек"""
+        for i in reversed(range(self.journal_cards_layout.count())):
+            widget = self.journal_cards_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        if not records:
+            # Сообщение если нет записей
+            empty_label = QLabel("📝 Записи не найдены")
+            empty_label.setStyleSheet("""
+                QLabel {
+                    color: #7F8C8D;
+                    font-size: 16px;
+                    font-weight: bold;
+                    padding: 40px;
+                    text-align: center;
+                }
+            """)
+            empty_label.setAlignment(Qt.AlignCenter)
+            self.journal_cards_layout.addWidget(empty_label)
+            return
+
+        # Создаем карточки для каждой записи
+        for record in records:
+            try:
+                journal_data = {
+                    'id': record.id,
+                    'care_type': record.care_type or "Другое",
+                    'care_date': record.care_date,
+                    'description': record.description or "",
+                    'status': getattr(record, 'status', 'Выполнено')
+                }
+
+                # Получаем имя растения
+                plant_name = "Неизвестное растение"
+                if hasattr(record, 'instance') and record.instance:
+                    try:
+                        plant = record.instance
+                        if plant.nickname and plant.nickname != 'None':
+                            plant_name = plant.nickname
+                        elif hasattr(plant, 'plant') and plant.plant:
+                            if hasattr(plant.plant, 'scientific_name'):
+                                plant_name = plant.plant.scientific_name
+                    except:
+                        pass
+
+                journal_data['plant_name'] = plant_name
+
+                # Создаем карточку
+                card = self.create_journal_card(journal_data)
+                self.journal_cards_layout.addWidget(card)
+
+            except Exception as card_e:
+                print(f"Ошибка создания карточки: {card_e}")
+                continue
+
+        self.journal_cards_layout.addStretch()
+
+    def add_journal_entry(self):
+        """Добавить запись в журнал"""
+        try:
+            if self.journal_plant_combo.currentIndex() <= 0:
+                self.show_warning_message("Внимание", "Выберите растение из списка")
+                return
+
+            plant_name = self.journal_plant_combo.currentText().replace("🌿 ", "").strip()
+
+            if plant_name == "-- Выберите растение --" or not plant_name:
+                self.show_warning_message("Внимание", "Выберите растение из списка")
+                return
+
+            # Ищем растение в базе данных
+            plant = None
+            try:
+                plant = self.service.PlantInstance.get_or_none(
+                    (self.service.PlantInstance.user == self.user_id) &
+                    (self.service.PlantInstance.nickname == plant_name)
+                )
+
+                if not plant:
+                    my_plants = list(self.service.PlantInstance.select().where(
+                        self.service.PlantInstance.user == self.user_id
+                    ))
+                    if my_plants and len(my_plants) > 0:
+                        plant = my_plants[0]  # Берем первое растение
+            except Exception as plant_e:
+                print(f"Ошибка поиска растения: {plant_e}")
+
+            if not plant:
+                self.show_warning_message("Ошибка", "Не удалось найти растение. Сначала добавьте растение в разделе 'Мои растения'")
+                return
+
+            care_type = self.journal_type_combo.currentText()
+            notes_text = self.journal_notes_edit.toPlainText().strip()
+            care_date = self.journal_date_edit.date().toPython()
+
+            # Формируем описание
+            plant_display_name = plant.nickname if plant.nickname and plant.nickname != 'None' else "Мое растение"
+            description = f"{care_type} растения '{plant_display_name}'"
+            if notes_text:
+                description += f". {notes_text}"
+
+            # Создаем запись в журнале
+            from datetime import datetime, time
+            care_datetime = datetime.combine(care_date)
+
+            print(f"DEBUG: Создание записи журнала:")
+            print(f"  Plant ID: {plant.id}")
+            print(f"  Care type: {care_type}")
+            print(f"  Date: {care_datetime}")
+            print(f"  User ID: {self.user_id}")
+            print(f"  Description: {description}")
+
+            # Создаем запись
+            self.service.CareJournal.create(
+                instance=plant,  # Растение
+                care_type=care_type,
+                care_date=care_datetime,
+                user=self.user_id,  # Пользователь
+                description=description,
+            )
+
+            # Сбрасываем форму
+            self.journal_plant_combo.setCurrentIndex(0)
+            self.journal_type_combo.setCurrentIndex(0)
+            self.journal_date_edit.setDate(QDate.currentDate())
+            self.journal_time_combo.setCurrentIndex(0)
+            self.journal_notes_edit.clear()
+
+            # Скрываем форму
+            self.toggle_journal_form(False)
+
+            # Обновляем список карточек
+            self.load_journal_cards()
+
+            self.show_info_message("Успех", f"Запись '{care_type}' добавлена для '{plant_display_name}'")
+
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось добавить запись: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def edit_journal_entry(self):
+        """Редактировать запись журнала"""
+        if not hasattr(self, 'selected_journal_card') or not self.selected_journal_card:
+            self.show_warning_message("Внимание", "Выберите запись из журнала, кликнув на карточку")
+            return
+
+        try:
+            # Получаем данные записи
+            journal_record = self.service.CareJournal.get_by_id(self.selected_journal_card)
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle(f"✏️ Редактировать запись журнала")
+            dialog.setFixedSize(550, 450)  # Немного уменьшил высоту т.к. добавим прокрутку
+
+            # Стиль окна
+            dialog.setStyleSheet("""
+                QDialog {
+                    background-color: #F5F5F5;
+                }
+                QLabel {
+                    font-size: 14px;
+                    color: #2c3e50;
+                }
+                QPushButton {
+                    padding: 8px 15px;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    min-width: 100px;
+                }
+            """)
+
+            main_layout = QVBoxLayout(dialog)
+            main_layout.setContentsMargins(0, 0, 0, 0)  # Убираем отступы т.к. будет в scroll area
+            main_layout.setSpacing(0)
+
+            # Заголовок
+            title_label = QLabel("✏️ Редактировать запись журнала")
+            title_label.setStyleSheet("""
+                QLabel {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #485935;
+                    padding: 15px 20px 10px 20px;
+                    border-bottom: 2px solid #93a267;
+                    background-color: white;
+                }
+            """)
+            title_label.setAlignment(Qt.AlignCenter)
+            main_layout.addWidget(title_label)
+
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setFrameStyle(QScrollArea.NoFrame)
+            scroll_area.setStyleSheet("""
+                QScrollArea {
+                    border: none;
+                    background-color: transparent;
+                }
+                QScrollBar:vertical {
+                    border: none;
+                    background-color: #E0E0E0;
+                    width: 10px;
+                    border-radius: 5px;
+                    margin: 0px;
+                }
+                QScrollBar::handle:vertical {
+                    background-color: #93a267;
+                    border-radius: 5px;
+                    min-height: 20px;
+                }
+                QScrollBar::handle:vertical:hover {
+                    background-color: #71804e;
+                }
+                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                    border: none;
+                    background: none;
+                }
+            """)
+
+            # Виджет для содержимого с прокруткой
+            scroll_content = QWidget()
+            form_layout = QVBoxLayout(scroll_content)
+            form_layout.setContentsMargins(20, 15, 25, 15)  # Отступ справа для полосы прокрутки
+            form_layout.setSpacing(15)
+
+            # Растение
+            plant_label = QLabel("🌿 Растение:")
+            plant_label.setStyleSheet("font-weight: bold; color: #485935;")
+
+            # Получаем имя растения
+            plant_name = self.selected_journal_data.get('plant_name', 'Неизвестное растение')
+            plant_value = QLabel(plant_name)
+            plant_value.setStyleSheet("""
+                QLabel {
+                    padding: 8px 15px;
+                    border: 1px solid #DDD;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    background-color: #F8F9FA;
+                }
+            """)
+            form_layout.addWidget(plant_label)
+            form_layout.addWidget(plant_value)
+
+            # Тип ухода
+            type_label = QLabel("🛠️ Тип ухода:")
+            type_label.setStyleSheet("font-weight: bold; color: #485935;")
+            type_combo = QComboBox()
+            type_combo.addItems(["Полив", "Удобрение", "Пересадка", "Обрезка", "Опрыскивание", "Другое"])
+            current_type = journal_record.care_type or "Другое"
+            type_combo.setCurrentText(current_type)
+            type_combo.setMinimumHeight(35)
+            type_combo.setStyleSheet("""
+                QComboBox {
+                    padding: 8px 15px;
+                    border: 2px solid #93a267;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    background-color: white;
+                }
+                QComboBox:focus {
+                    border: 2px solid #485935;
+                }
+            """)
+            form_layout.addWidget(type_label)
+            form_layout.addWidget(type_combo)
+
+            # Дата ухода
+            date_label = QLabel("📅 Дата ухода:")
+            date_label.setStyleSheet("font-weight: bold; color: #485935;")
+            date_edit = QDateEdit()
+            date_edit.setCalendarPopup(True)
+
+            # Устанавливаем текущую дату из записи
+            if journal_record.care_date:
+                care_date = journal_record.care_date
+                from datetime import date, datetime
+
+                if isinstance(care_date, datetime):
+                    qdate = QDate(care_date.year, care_date.month, care_date.day)
+                elif isinstance(care_date, date):
+                    qdate = QDate(care_date.year, care_date.month, care_date.day)
+                else:
+                    qdate = QDate.currentDate()
+                date_edit.setDate(qdate)
+            else:
+                date_edit.setDate(QDate.currentDate())
+
+            date_edit.setDisplayFormat("dd.MM.yyyy")
+            date_edit.setMinimumHeight(35)
+            date_edit.setStyleSheet("""
+                QDateEdit {
+                    padding: 8px 15px;
+                    border: 2px solid #93a267;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    background-color: white;
+                }
+                QDateEdit:focus {
+                    border: 2px solid #485935;
+                }
+            """)
+            form_layout.addWidget(date_label)
+            form_layout.addWidget(date_edit)
+
+            # Заметки
+            notes_label = QLabel("📝 Заметки:")
+            notes_label.setStyleSheet("font-weight: bold; color: #485935;")
+            notes_edit = QTextEdit()
+            notes_edit.setPlainText(journal_record.description or "")
+            notes_edit.setMinimumHeight(120)  # Увеличил высоту для заметок
+            notes_edit.setStyleSheet("""
+                QTextEdit {
+                    padding: 8px 15px;
+                    border: 2px solid #93a267;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    background-color: white;
+                }
+                QTextEdit:focus {
+                    border: 2px solid #485935;
+                }
+            """)
+            form_layout.addWidget(notes_label)
+            form_layout.addWidget(notes_edit)
+
+            form_layout.addStretch()
+
+            # Устанавливаем содержимое в scroll area
+            scroll_area.setWidget(scroll_content)
+            main_layout.addWidget(scroll_area, 1)
+
+            # Кнопки
+            buttons_container = QFrame()
+            buttons_container.setStyleSheet("""
+                QFrame {
+                    background-color: white;
+                    border-top: 1px solid #E0E0E0;
+                }
+            """)
+            buttons_layout = QHBoxLayout(buttons_container)
+            buttons_layout.setContentsMargins(20, 15, 20, 15)
+            buttons_layout.setSpacing(15)
+            buttons_layout.addStretch()
+
+            def save_changes():
+                try:
+                    # Обновляем запись
+                    journal_record.care_type = type_combo.currentText()
+                    journal_record.description = notes_edit.toPlainText().strip()
+
+                    from datetime import datetime, time, date
+                    new_date = date_edit.date().toPython()
+
+                    current_care_date = journal_record.care_date
+
+                    if isinstance(current_care_date, datetime):
+                        current_time = current_care_date.time()
+                        journal_record.care_date = datetime.combine(new_date, current_time)
+                    else:
+                        journal_record.care_date = datetime.combine(new_date, time(12, 0))
+
+                    journal_record.save()
+
+                    # Обновляем данные в выбранной карточке
+                    if hasattr(self, 'selected_journal_data'):
+                        self.selected_journal_data.update({
+                            'care_type': journal_record.care_type,
+                            'description': journal_record.description,
+                            'care_date': journal_record.care_date,
+                        })
+
+                    self.show_info_message("Успех", "Запись обновлена!")
+                    dialog.accept()
+                    self.load_journal_cards()
+                except Exception as e:
+                    self.show_error_message("Ошибка", f"Не удалось сохранить изменения: {str(e)}")
+
+            def cancel():
+                dialog.reject()
+
+            btn_save = QPushButton("💾 Сохранить")
+            btn_save.clicked.connect(save_changes)
+            btn_save.setStyleSheet("""
+                QPushButton {
+                    background-color: #93a267;
+                    color: white;
+                    border: none;
+                    padding: 10px 25px;
+                }
+                QPushButton:hover {
+                    background-color: #71804e;
+                }
+            """)
+
+            btn_cancel = QPushButton("❌ Отмена")
+            btn_cancel.clicked.connect(cancel)
+            btn_cancel.setStyleSheet("""
+                QPushButton {
+                    background-color: #95A5A6;
+                    color: white;
+                    border: none;
+                    padding: 10px 25px;
+                }
+                QPushButton:hover {
+                    background-color: #7F8C8D;
+                }
+            """)
+
+            buttons_layout.addWidget(btn_save)
+            buttons_layout.addWidget(btn_cancel)
+            main_layout.addWidget(buttons_container)
+
+            # Центрируем окно
+            dialog.move(
+                self.x() + (self.width() - dialog.width()) // 2,
+                self.y() + (self.height() - dialog.height()) // 2
+            )
+
+            dialog.exec()
+
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось загрузить данные записи: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def delete_journal_entry(self):
+        """Удалить запись журнала"""
+        if not hasattr(self, 'selected_journal_card') or not self.selected_journal_card:
+            self.show_warning_message("Внимание", "Выберите запись из журнала, кликнув на карточку")
+            return
+
+        plant_name = self.selected_journal_data.get('plant_name', 'Растение')
+        care_type = self.selected_journal_data.get('care_type', 'Запись')
+        date_text = ""
+        if self.selected_journal_data.get('care_date'):
+            try:
+                if isinstance(self.selected_journal_data['care_date'], str):
+                    date_text = self.selected_journal_data['care_date'][:10]
+                else:
+                    from datetime import datetime
+                    if isinstance(self.selected_journal_data['care_date'], datetime):
+                        date_text = self.selected_journal_data['care_date'].strftime('%d.%m.%Y')
+            except:
+                pass
+
+        if self.show_confirmation_dialog("Подтверждение удаления",
+                                       f"Удалить запись журнала?\n\n"
+                                       f"Растение: {plant_name}"):
+            try:
+                self.service.CareJournal.delete_by_id(self.selected_journal_card)
+
+                # Сбрасываем выбор
+                if hasattr(self, 'selected_journal_card'):
+                    delattr(self, 'selected_journal_card')
+                if hasattr(self, 'selected_journal_data'):
+                    delattr(self, 'selected_journal_data')
+
+                self.show_info_message("Успех", "Запись удалена из журнала")
+                self.load_journal_cards()  # Обновляем список
+
+            except Exception as e:
+                self.show_error_message("Ошибка", f"Не удалось удалить запись: {str(e)}")
+
+    def add_journal_dialog(self):
+        """Показать диалоговое окно для добавления записи в журнал"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("➕ Добавить запись в журнал")
+        dialog.setFixedSize(500, 450)
+
+        # Стиль окна
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #F5F5F5;
+            }
+            QLabel {
+                font-size: 14px;
+                color: #2c3e50;
+            }
+            QPushButton {
+                padding: 8px 15px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: bold;
+                min-width: 100px;
+            }
+        """)
+
+        # Основной лэйаут
+        main_layout = QVBoxLayout(dialog)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(15)
+
+        # Заголовок
+        title_label = QLabel("➕ Добавить запись в журнал")
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 18px;
+                font-weight: bold;
+                color: #485935;
+                padding-bottom: 8px;
+                border-bottom: 2px solid #93a267;
+                margin-bottom: 10px;
+            }
+        """)
+        title_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(title_label)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameStyle(QScrollArea.NoFrame)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #E0E0E0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
+        # Виджет для содержимого с прокруткой
+        scroll_content = QWidget()
+        form_layout = QVBoxLayout(scroll_content)
+        form_layout.setContentsMargins(5, 5, 15, 5)  # Отступ справа для полосы прокрутки
+        form_layout.setSpacing(15)
+
+        # Растение
+        plant_label = QLabel("🌿 Растение:")
+        plant_label.setStyleSheet("font-weight: bold; color: #485935;")
+
+        plant_combo = QComboBox()
+        plant_combo.addItem("-- Выберите растение --", None)
+
+        # Загружаем растения пользователя
+        try:
+            my_plants = list(self.service.PlantInstance.select().where(
+                self.service.PlantInstance.user == self.user_id
+            ))
+
+            for plant in my_plants:
+                display_name = plant.nickname if plant.nickname and plant.nickname != 'None' else "Мое растение"
+                plant_combo.addItem(f"🌿 {display_name}", plant.id)
+        except Exception as e:
+            print(f"Ошибка загрузки растений: {e}")
+            plant_combo.addItem("⚠️ Ошибка загрузки растений", None)
+
+        plant_combo.setMinimumHeight(35)
+        plant_combo.setStyleSheet("""
+            QComboBox {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QComboBox:focus {
+                border: 2px solid #485935;
+            }
+        """)
+        form_layout.addWidget(plant_label)
+        form_layout.addWidget(plant_combo)
+
+        # Тип ухода
+        type_label = QLabel("🛠️ Тип ухода:")
+        type_label.setStyleSheet("font-weight: bold; color: #485935;")
+        type_combo = QComboBox()
+        type_combo.addItems(["Полив", "Удобрение", "Пересадка", "Обрезка", "Опрыскивание", "Другое"])
+        type_combo.setMinimumHeight(35)
+        type_combo.setStyleSheet("""
+            QComboBox {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QComboBox:focus {
+                border: 2px solid #485935;
+            }
+        """)
+        form_layout.addWidget(type_label)
+        form_layout.addWidget(type_combo)
+
+        # Дата ухода
+        date_label = QLabel("📅 Дата ухода:")
+        date_label.setStyleSheet("font-weight: bold; color: #485935;")
+        date_edit = QDateEdit()
+        date_edit.setCalendarPopup(True)
+        date_edit.setDate(QDate.currentDate())
+        date_edit.setDisplayFormat("dd.MM.yyyy")
+        date_edit.setMinimumHeight(35)
+        date_edit.setStyleSheet("""
+            QDateEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QDateEdit:focus {
+                border: 2px solid #485935;
+            }
+        """)
+        form_layout.addWidget(date_label)
+        form_layout.addWidget(date_edit)
+
+        # Заметки
+        notes_label = QLabel("📝 Заметки (необязательно):")
+        notes_label.setStyleSheet("font-weight: bold; color: #485935;")
+        notes_edit = QTextEdit()
+        notes_edit.setMaximumHeight(80)
+        notes_edit.setPlaceholderText("Опишите что было сделано...")
+        notes_edit.setStyleSheet("""
+            QTextEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QTextEdit:focus {
+                border: 2px solid #485935;
+            }
+        """)
+        form_layout.addWidget(notes_label)
+        form_layout.addWidget(notes_edit)
+
+        # Растягивающийся элемент
+        form_layout.addStretch()
+
+        scroll_area.setWidget(scroll_content)
+        main_layout.addWidget(scroll_area, 1)
+
+        # Кнопки
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(15)
+        buttons_layout.addStretch()
+
+        def save_journal_entry():
+            # Проверяем выбор растения
+            if plant_combo.currentIndex() <= 0:
+                self.show_warning_message("Внимание", "Выберите растение из списка")
+                return
+
+            try:
+                plant_id = plant_combo.currentData()
+                care_type = type_combo.currentText()
+                care_date = date_edit.date().toPython()  # Это уже date объект
+                notes = notes_edit.toPlainText().strip()
+
+                # Получаем растение
+                plant = self.service.PlantInstance.get_by_id(plant_id)
+
+                # Формируем описание
+                description = notes if notes else ""
+                print(f"DEBUG: Создание записи журнала:")
+                print(f"  Plant ID: {plant_id}")
+                print(f"  Plant: {plant.nickname if plant.nickname else 'Мое растение'}")
+                print(f"  Care type: {care_type}")
+                print(f"  Date: {care_date}")
+                print(f"  Description: {description}")
+
+                self.service.CareJournal.create(
+                    instance=plant,
+                    care_type=care_type,
+                    care_date=care_date,
+                    user=self.user_id,
+                    description=description,
+                )
+
+                self.show_info_message("Успех", "Запись добавлена в журнал!")
+                dialog.accept()
+                self.load_journal_cards()
+
+            except Exception as e:
+                self.show_error_message("Ошибка", f"Не удалось добавить запись: {str(e)}")
+                import traceback
+                traceback.print_exc()
+
+        def cancel():
+            dialog.reject()
+
+        btn_save = QPushButton("💾 Сохранить")
+        btn_save.clicked.connect(save_journal_entry)
+        btn_save.setStyleSheet("""
+            QPushButton {
+                background-color: #93a267;
+                color: white;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #71804e;
+            }
+        """)
+
+        btn_cancel = QPushButton("❌ Отмена")
+        btn_cancel.clicked.connect(cancel)
+        btn_cancel.setStyleSheet("""
+            QPushButton {
+                background-color: #95A5A6;
+                color: white;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #7F8C8D;
+            }
+        """)
+
+        buttons_layout.addWidget(btn_save)
+        buttons_layout.addWidget(btn_cancel)
+        main_layout.addLayout(buttons_layout)
+
+        # Центрируем окно
+        dialog.move(
+            self.x() + (self.width() - dialog.width()) // 2,
+            self.y() + (self.height() - dialog.height()) // 2
+        )
+
+        dialog.exec()
+
+    def switch_page(self, page_id):
+        """Переключить страницу"""
+        self.set_active_button(page_id)
+
+        page_titles = {
+            "catalog": "📚 Справочник растений",
+            "my_plants": "🌱 Мои растения",
+            "journal": "📓 Журнал ухода",
+            "stats": "📊 Статистика",
+            "settings": "⚙️ Настройки",
+            "help": "❓ Помощь"
+        }
+
+        self.page_title.setText(page_titles.get(page_id, "Добро пожаловать!"))
+
+        # Загружаем данные при переходе на страницу журнала
+        if page_id == "journal":
+            self.load_journal_cards()
+
+        # Обновляем при переходе на Мои растения
+        if page_id == "my_plants":
+            self.load_my_plants()
+
+        # Показываем соответствующую страницу
+        page_index = {
+            "catalog": 0,
+            "my_plants": 1,
+            "journal": 2,
+            "stats": 3,
+            "settings": 4,
+            "help": 5
+        }.get(page_id, 0)
+
+        self.stacked_widget.setCurrentIndex(page_index)
+
