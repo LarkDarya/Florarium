@@ -4256,3 +4256,2371 @@ class UserWindow(QWidget):
         except Exception as e:
             self.show_error_message("Ошибка", f"Не удалось создать Word документ: {str(e)}")
 
+    def create_settings_page(self):
+        """Создать страницу настроек аккаунта с прокруткой"""
+        page = QWidget()
+
+        main_layout = QVBoxLayout(page)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(25)
+
+        # Заголовок
+        title_label = QLabel("⚙️ Настройки аккаунта")
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 24px;
+                font-weight: bold;
+                color: #2C3E50;
+                margin-bottom: 10px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #93a267;
+            }
+        """)
+        title_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(title_label)
+
+        # Создаем ScrollArea для прокрутки
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QScrollArea.NoFrame)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #F0F0F0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
+        # Контейнер для содержимого
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 10, 0)  # Отступ справа для полосы прокрутки
+        content_layout.setSpacing(20)
+
+        # Секция редактирования профиля
+        edit_group = QGroupBox("✏️ Редактировать профиль")
+        edit_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 16px;
+                border: 2px solid #93a267;
+                border-radius: 10px;
+                padding-top: 15px;
+                background-color: white;
+                margin-bottom: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 10px 0 10px;
+                color: #2C3E50;
+            }
+        """)
+
+        edit_layout = QVBoxLayout(edit_group)
+        edit_layout.setSpacing(20)
+
+        # Загружаем текущие данные пользователя
+        try:
+            user = self.service.User.get_by_id(self.user_id)
+            current_user_data = {
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'birth_date': user.birth_date if hasattr(user, 'birth_date') else None
+            }
+        except Exception as e:
+            print(f"Ошибка загрузки данных пользователя: {e}")
+            current_user_data = {
+                'first_name': '',
+                'last_name': '',
+                'email': '',
+                'birth_date': None
+            }
+
+        # Форма редактирования
+        form_layout = QGridLayout()
+        form_layout.setHorizontalSpacing(20)
+        form_layout.setVerticalSpacing(15)
+
+        # Имя
+        name_label = QLabel("Имя:")
+        name_label.setStyleSheet("font-weight: bold; color: #485935;")
+        self.edit_first_name = QLineEdit()
+        self.edit_first_name.setText(current_user_data['first_name'])
+        self.edit_first_name.setMinimumHeight(40)
+        self.edit_first_name.setPlaceholderText("Введите ваше имя")
+        self.edit_first_name.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border: 2px solid #485935;
+            }
+        """)
+        form_layout.addWidget(name_label, 0, 0)
+        form_layout.addWidget(self.edit_first_name, 0, 1)
+
+        # Фамилия
+        last_name_label = QLabel("Фамилия:")
+        last_name_label.setStyleSheet("font-weight: bold; color: #485935;")
+        self.edit_last_name = QLineEdit()
+        self.edit_last_name.setText(current_user_data['last_name'])
+        self.edit_last_name.setMinimumHeight(40)
+        self.edit_last_name.setPlaceholderText("Введите вашу фамилию")
+        self.edit_last_name.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border: 2px solid #485935;
+            }
+        """)
+        form_layout.addWidget(last_name_label, 1, 0)
+        form_layout.addWidget(self.edit_last_name, 1, 1)
+
+        # Email
+        email_label = QLabel("Email:")
+        email_label.setStyleSheet("font-weight: bold; color: #485935;")
+        self.edit_email = QLineEdit()
+        self.edit_email.setText(current_user_data['email'])
+        self.edit_email.setMinimumHeight(40)
+        self.edit_email.setPlaceholderText("Введите ваш email")
+        self.edit_email.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border: 2px solid #485935;
+            }
+        """)
+        form_layout.addWidget(email_label, 2, 0)
+        form_layout.addWidget(self.edit_email, 2, 1)
+
+        # Дата рождения
+        birth_date_label = QLabel("Дата рождения:")
+        birth_date_label.setStyleSheet("font-weight: bold; color: #485935;")
+        self.edit_birth_date = QDateEdit()
+        self.edit_birth_date.setCalendarPopup(True)
+        self.edit_birth_date.setDisplayFormat("dd.MM.yyyy")
+
+        # Устанавливаем текущую дату рождения
+        if current_user_data['birth_date']:
+            try:
+                if isinstance(current_user_data['birth_date'], str):
+                    from datetime import datetime
+                    birth_date = datetime.strptime(current_user_data['birth_date'], '%Y-%m-%d').date()
+                    qdate = QDate(birth_date.year, birth_date.month, birth_date.day)
+                    self.edit_birth_date.setDate(qdate)
+                else:
+                    birth_date = current_user_data['birth_date']
+                    qdate = QDate(birth_date.year, birth_date.month, birth_date.day)
+                    self.edit_birth_date.setDate(qdate)
+            except:
+                self.edit_birth_date.setDate(QDate(2000, 1, 1))
+        else:
+            self.edit_birth_date.setDate(QDate(2000, 1, 1))
+
+        # Устанавливаем диапазон дат
+        current_year = QDate.currentDate().year()
+        self.edit_birth_date.setMinimumDate(QDate(1900, 1, 1))
+        self.edit_birth_date.setMaximumDate(QDate.currentDate())
+
+        self.edit_birth_date.setMinimumHeight(40)
+        self.edit_birth_date.setStyleSheet("""
+            QDateEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QDateEdit:focus {
+                border: 2px solid #485935;
+            }
+            QCalendarWidget {
+                background-color: white;
+            }
+        """)
+        form_layout.addWidget(birth_date_label, 3, 0)
+        form_layout.addWidget(self.edit_birth_date, 3, 1)
+
+        edit_layout.addLayout(form_layout)
+
+        # Секция смены пароля
+        password_group = QGroupBox("🔐 Смена пароля")
+        password_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 16px;
+                border: 2px solid #3498db;
+                border-radius: 10px;
+                padding-top: 15px;
+                background-color: white;
+                margin-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 10px 0 10px;
+                color: #3498db;
+            }
+        """)
+
+        password_layout = QVBoxLayout(password_group)
+        password_layout.setSpacing(15)
+
+        # Текущий пароль
+        current_pass_label = QLabel("Текущий пароль:")
+        current_pass_label.setStyleSheet("font-weight: bold; color: #485935;")
+        self.edit_current_password = QLineEdit()
+        self.edit_current_password.setMinimumHeight(40)
+        self.edit_current_password.setPlaceholderText("Введите текущий пароль")
+        self.edit_current_password.setEchoMode(QLineEdit.Password)
+        self.edit_current_password.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border: 2px solid #485935;
+            }
+        """)
+
+        # Новый пароль
+        new_pass_label = QLabel("Новый пароль:")
+        new_pass_label.setStyleSheet("font-weight: bold; color: #485935;")
+        self.edit_new_password = QLineEdit()
+        self.edit_new_password.setMinimumHeight(40)
+        self.edit_new_password.setPlaceholderText("Введите новый пароль")
+        self.edit_new_password.setEchoMode(QLineEdit.Password)
+        self.edit_new_password.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border: 2px solid #485935;
+            }
+        """)
+
+        # Подтверждение пароля
+        confirm_pass_label = QLabel("Подтвердите пароль:")
+        confirm_pass_label.setStyleSheet("font-weight: bold; color: #485935;")
+        self.edit_confirm_password = QLineEdit()
+        self.edit_confirm_password.setMinimumHeight(40)
+        self.edit_confirm_password.setPlaceholderText("Повторите новый пароль")
+        self.edit_confirm_password.setEchoMode(QLineEdit.Password)
+        self.edit_confirm_password.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border: 2px solid #485935;
+            }
+        """)
+
+        password_layout.addWidget(current_pass_label)
+        password_layout.addWidget(self.edit_current_password)
+        password_layout.addWidget(new_pass_label)
+        password_layout.addWidget(self.edit_new_password)
+        password_layout.addWidget(confirm_pass_label)
+        password_layout.addWidget(self.edit_confirm_password)
+
+        # Информация о требованиях к паролю
+        pass_info_label = QLabel("⚠️ Пароль должен содержать минимум 6 символов")
+        pass_info_label.setStyleSheet("""
+            QLabel {
+                color: #7F8C8D;
+                font-size: 12px;
+                font-style: italic;
+                padding: 5px;
+            }
+        """)
+        password_layout.addWidget(pass_info_label)
+
+        # Кнопка смены пароля
+        pass_button_layout = QHBoxLayout()
+        pass_button_layout.setAlignment(Qt.AlignRight)
+
+        self.btn_change_password = QPushButton("🔄 Сменить пароль")
+        self.btn_change_password.setFixedHeight(40)
+        self.btn_change_password.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 0 20px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 150px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #21618c;
+            }
+        """)
+        self.btn_change_password.clicked.connect(self.change_password)
+        pass_button_layout.addWidget(self.btn_change_password)
+
+        password_layout.addLayout(pass_button_layout)
+        edit_layout.addWidget(password_group)
+
+        # Кнопка сохранения изменений профиля
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(15)
+        button_layout.setAlignment(Qt.AlignRight)
+
+        self.btn_save_profile = QPushButton("💾 Сохранить профиль")
+        self.btn_save_profile.setFixedHeight(45)
+        self.btn_save_profile.setStyleSheet("""
+            QPushButton {
+                background-color: #93a267;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 0 25px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 180px;
+            }
+            QPushButton:hover {
+                background-color: #71804e;
+            }
+            QPushButton:pressed {
+                background-color: #5a663c;
+            }
+        """)
+        self.btn_save_profile.clicked.connect(self.save_profile_changes)
+        button_layout.addWidget(self.btn_save_profile)
+
+        edit_layout.addLayout(button_layout)
+        content_layout.addWidget(edit_group)
+
+        # Секция опасных действий
+        danger_group = QGroupBox("⚠️ Опасные действия")
+        danger_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 16px;
+                border: 2px solid #e74c3c;
+                border-radius: 10px;
+                padding-top: 15px;
+                background-color: white;
+                margin-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 10px 0 10px;
+                color: #e74c3c;
+            }
+        """)
+
+        danger_layout = QVBoxLayout(danger_group)
+        danger_layout.setSpacing(15)
+
+        # Предупреждение
+        warning_label = QLabel("❗ ВНИМАНИЕ: Удаление аккаунта - необратимая операция.\n"
+                              "Все ваши данные (растения, журнал ухода, фотографии) будут безвозвратно удалены.")
+        warning_label.setStyleSheet("""
+            QLabel {
+                color: #e74c3c;
+                font-size: 13px;
+                font-weight: bold;
+                padding: 10px;
+                background-color: rgba(231, 76, 60, 0.1);
+                border-radius: 6px;
+                border: 1px solid #e74c3c;
+            }
+        """)
+        warning_label.setWordWrap(True)
+        danger_layout.addWidget(warning_label)
+
+        # Кнопка удаления аккаунта
+        danger_button_layout = QHBoxLayout()
+        danger_button_layout.setAlignment(Qt.AlignRight)
+
+        self.btn_delete_account = QPushButton("🗑️ Удалить аккаунт")
+        self.btn_delete_account.setFixedHeight(45)
+        self.btn_delete_account.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 0 25px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 200px;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+            QPushButton:pressed {
+                background-color: #a93226;
+            }
+        """)
+        self.btn_delete_account.clicked.connect(self.delete_account)
+        danger_button_layout.addWidget(self.btn_delete_account)
+
+        danger_layout.addLayout(danger_button_layout)
+        content_layout.addWidget(danger_group)
+
+        # Добавляем растягивающийся элемент в конце
+        content_layout.addStretch()
+
+        # Устанавливаем содержимое scroll area
+        scroll_area.setWidget(content_widget)
+
+        # Добавляем scroll area в основной layout
+        main_layout.addWidget(scroll_area, 1)  # 1 = растягивается
+
+        self.stacked_widget.addWidget(page)
+
+    def save_profile_changes(self):
+        """Сохранить изменения профиля (без пароля)"""
+        # Получаем данные из полей
+        first_name = self.edit_first_name.text().strip()
+        last_name = self.edit_last_name.text().strip()
+        email = self.edit_email.text().strip()
+        birth_date = self.edit_birth_date.date().toPython()  # Получаем datetime.date объект
+
+        # Проверка обязательных полей
+        if not first_name:
+            self.show_warning_message("Ошибка", "Поле 'Имя' не может быть пустым")
+            return
+
+        if not last_name:
+            self.show_warning_message("Ошибка", "Поле 'Фамилия' не может быть пустым")
+            return
+
+        if not email:
+            self.show_warning_message("Ошибка", "Поле 'Email' не может быть пустым")
+            return
+
+        # Проверка email
+        import re
+        email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+        if not email_pattern.match(email):
+            self.show_warning_message("Ошибка", "Введите корректный email адрес")
+            return
+
+        # Проверка даты рождения (не может быть в будущем)
+        from datetime import date
+        if birth_date > date.today():
+            self.show_warning_message("Ошибка", "Дата рождения не может быть в будущем")
+            return
+
+        try:
+            # Проверяем, не занят ли email другим пользователем
+            existing_user = self.service.User.get_or_none(self.service.User.email == email)
+            if existing_user and existing_user.id != self.user_id:
+                self.show_warning_message("Ошибка", "Этот email уже используется другим пользователем")
+                return
+
+            # Обновляем пользователя
+            user = self.service.User.get_by_id(self.user_id)
+            user.first_name = first_name
+            user.last_name = last_name
+            user.email = email
+
+            # Обновляем дату рождения, только если модель поддерживает
+            if hasattr(user, 'birth_date'):
+                user.birth_date = birth_date
+
+            user.save()
+
+            # Обновляем информацию в сайдбаре
+            self.load_user_data()
+
+            self.show_info_message("Успех", "Профиль успешно обновлен!")
+
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось обновить профиль: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def change_password(self):
+        """Сменить пароль пользователя"""
+        current_password = self.edit_current_password.text().strip()
+        new_password = self.edit_new_password.text().strip()
+        confirm_password = self.edit_confirm_password.text().strip()
+
+        # Проверка заполнения полей
+        if not current_password:
+            self.show_warning_message("Ошибка", "Введите текущий пароль")
+            return
+
+        if not new_password:
+            self.show_warning_message("Ошибка", "Введите новый пароль")
+            return
+
+        if not confirm_password:
+            self.show_warning_message("Ошибка", "Подтвердите новый пароль")
+            return
+
+        # Проверка совпадения паролей
+        if new_password != confirm_password:
+            self.show_warning_message("Ошибка", "Новые пароли не совпадают")
+            return
+
+        # Проверка длины пароля
+        if len(new_password) < 6:
+            self.show_warning_message("Ошибка", "Пароль должен содержать минимум 6 символов")
+            return
+
+        # Проверка сложности пароля
+        import re
+        if not re.search(r'\d', new_password):
+            self.show_warning_message("Ошибка", "Пароль должен содержать буквы и цифры")
+            return
+
+        # Проверка что новый пароль не совпадает со старым
+        if current_password == new_password:
+            self.show_warning_message("Ошибка", "Новый пароль должен отличаться от текущего")
+            return
+
+        try:
+            user = self.service.User.get_by_id(self.user_id)
+
+            if user.password != current_password:
+                self.show_warning_message("Ошибка", "Текущий пароль неверен")
+                return
+
+            # Обновляем пароль
+            user.password = new_password
+            user.save()
+
+            # Очищаем поля паролей
+            self.edit_current_password.clear()
+            self.edit_new_password.clear()
+            self.edit_confirm_password.clear()
+
+            self.show_info_message("Успех", "Пароль успешно изменен!")
+
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось изменить пароль: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def save_profile_changes(self):
+        """Сохранить изменения профиля"""
+        first_name = self.edit_first_name.text().strip()
+        last_name = self.edit_last_name.text().strip()
+        email = self.edit_email.text().strip()
+
+        # Проверка обязательных полей
+        if not first_name:
+            self.show_warning_message("Ошибка", "Поле 'Имя' не может быть пустым")
+            return
+
+        if not last_name:
+            self.show_warning_message("Ошибка", "Поле 'Фамилия' не может быть пустым")
+            return
+
+        if not email:
+            self.show_warning_message("Ошибка", "Поле 'Email' не может быть пустым")
+            return
+
+        # Проверка email
+        import re
+        email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+        if not email_pattern.match(email):
+            self.show_warning_message("Ошибка", "Введите корректный email адрес")
+            return
+
+        try:
+            # Проверяем, не занят ли email другим пользователем
+            existing_user = self.service.User.get_or_none(self.service.User.email == email)
+            if existing_user and existing_user.id != self.user_id:
+                self.show_warning_message("Ошибка", "Этот email уже используется другим пользователем")
+                return
+
+            # Обновляем пользователя
+            user = self.service.User.get_by_id(self.user_id)
+            user.first_name = first_name
+            user.last_name = last_name
+            user.email = email
+            user.save()
+
+            # Обновляем информацию в сайдбаре
+            self.load_user_data()
+
+            self.show_info_message("Успех", "Профиль успешно обновлен!")
+
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось обновить профиль: {str(e)}")
+
+    def delete_account(self):
+        """Удалить аккаунт пользователя со всеми данными"""
+        confirmation = self.show_confirmation_dialog(
+            "⚠️ ВНИМАНИЕ: Удаление аккаунта",
+            "Вы действительно хотите удалить свой аккаунт?\n\n"
+            "Это приведет к БЕЗВОЗВРАТНОМУ удалению:\n"
+            "• Всех ваших растений\n"
+            "• Всех записей журнала ухода\n"
+            "• Всех фотографий растений\n"
+            "• Вашего профиля пользователя\n\n"
+            "Это действие нельзя отменить!"
+        )
+
+        if not confirmation:
+            return
+
+        # Второе подтверждение (для безопасности)
+        final_confirmation = self.show_confirmation_dialog(
+            "‼️ ФИНАЛЬНОЕ ПОДТВЕРЖДЕНИЕ",
+            "Введите в поле ниже текст 'УДАЛИТЬ МОЙ АККАУНТ' для подтверждения:"
+        )
+
+        if not final_confirmation:
+            return
+
+        # Создаем диалог для ввода подтверждающего текста
+        dialog, layout = self.create_styled_dialog("Подтверждение удаления", 500, 250)
+
+        # Инструкция
+        instruction_label = QLabel("Для подтверждения удаления введите текст:\n"
+                                  "<b>'УДАЛИТЬ МОЙ АККАУНТ'</b>")
+        instruction_label.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #2c3e50;
+                padding: 10px;
+            }
+        """)
+        instruction_label.setAlignment(Qt.AlignCenter)
+        instruction_label.setWordWrap(True)
+        layout.addWidget(instruction_label)
+
+        # Поле для ввода
+        confirm_input = QLineEdit()
+        confirm_input.setPlaceholderText("Введите текст подтверждения...")
+        confirm_input.setMinimumHeight(40)
+        confirm_input.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #e74c3c;
+                border-radius: 8px;
+                font-size: 14px;
+                background-color: white;
+            }
+            QLineEdit:focus {
+                border: 2px solid #c0392b;
+            }
+        """)
+        layout.addWidget(confirm_input)
+
+        # Кнопки
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(15)
+
+        btn_confirm = self.create_styled_button("Подтвердить", "secondary")
+        btn_cancel = self.create_styled_button("Отмена", "primary")
+
+        def on_confirm():
+            if confirm_input.text().strip() == "УДАЛИТЬ МОЙ АККАУНТ":
+                dialog.accept()
+                # Вызываем фактическое удаление
+                self.perform_account_deletion()
+            else:
+                self.show_warning_message("Ошибка", "Текст подтверждения не совпадает")
+
+        btn_confirm.clicked.connect(on_confirm)
+        btn_cancel.clicked.connect(dialog.reject)
+
+        buttons_layout.addWidget(btn_confirm)
+        buttons_layout.addWidget(btn_cancel)
+        layout.addLayout(buttons_layout)
+
+        dialog.exec()
+
+    def perform_account_deletion(self):
+        """Выполнить фактическое удаление аккаунта"""
+        try:
+            # Получаем пользователя
+            user = self.service.User.get_by_id(self.user_id)
+
+            # Удаляем все растения пользователя (и их фотографии)
+            user_plants = list(self.service.PlantInstance.select().where(
+                self.service.PlantInstance.user == self.user_id
+            ))
+
+            plant_count = 0
+            photo_count = 0
+
+            for plant in user_plants:
+                try:
+                    # Удаляем фотографии растения
+                    photos = list(self.service.InstancePhoto.select().where(
+                        self.service.InstancePhoto.instance == plant
+                    ))
+
+                    for photo in photos:
+                        # Удаляем файл с диска
+                        if photo.photo_url and os.path.exists(photo.photo_url):
+                            try:
+                                os.remove(photo.photo_url)
+                                photo_count += 1
+                            except Exception as e:
+                                print(f"Не удалось удалить файл {photo.photo_url}: {e}")
+
+                    # Удаляем записи фотографий из базы
+                    self.service.InstancePhoto.delete().where(
+                        self.service.InstancePhoto.instance == plant
+                    ).execute()
+
+                    # Удаляем записи журнала для этого растения
+                    self.service.CareJournal.delete().where(
+                        self.service.CareJournal.instance == plant
+                    ).execute()
+
+                    # Удаляем само растение
+                    plant.delete_instance()
+                    plant_count += 1
+
+                except Exception as plant_e:
+                    print(f"Ошибка при удалении растения {plant.id}: {plant_e}")
+
+            # Удаляем пользователя
+            user_email = user.email  # Сохраняем для сообщения
+            user.delete_instance()
+
+            # Закрываем соединение с базой
+            self.service.close()
+
+            # Показываем сообщение об успешном удалении
+            self.show_info_message(
+                "Аккаунт удален",
+                f"Аккаунт {user_email} успешно удален.\n\n"
+                f"Удалено:\n"
+                f"• Растений: {plant_count}\n"
+                f"• Фотографий: {photo_count}\n\n"
+                f"Приложение будет закрыто."
+            )
+
+            # Закрываем приложение
+            self.close()
+
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось удалить аккаунт: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def create_help_page(self):
+        """Создать страницу помощи"""
+        page = QWidget()
+
+        # Создаем ScrollArea для прокрутки
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QScrollArea.NoFrame)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #F0F0F0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+        """)
+
+        # Контейнер для содержимого
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(30, 30, 40, 30)
+        content_layout.setSpacing(25)
+
+        # Заголовок
+        title_label = QLabel("❓ Помощь по приложению")
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 28px;
+                font-weight: bold;
+                color: #2C3E50;
+                margin-bottom: 10px;
+                padding-bottom: 10px;
+                border-bottom: 3px solid #93a267;
+            }
+        """)
+        title_label.setAlignment(Qt.AlignCenter)
+        content_layout.addWidget(title_label)
+
+        # Секция: Общее описание
+        general_group = QGroupBox("🌱 О приложении")
+        general_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 16px;
+                border: 2px solid #93a267;
+                border-radius: 10px;
+                padding-top: 15px;
+                background-color: white;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 10px 0 10px;
+                color: #2C3E50;
+            }
+        """)
+
+        general_layout = QVBoxLayout(general_group)
+        general_layout.setSpacing(10)
+
+        desc_text = QLabel(
+            "Добро пожаловать в <b>Флорариум</b> - вашего цифрового помощника в уходе за растениями!\n\n"
+            "Приложение поможет вам:\n"
+            "• 📚 Изучать растения в справочнике\n"
+            "• 🌱 Вести учет своих растений\n"
+            "• 📓 Следить за уходом в журнале\n"
+            "• 📊 Анализировать статистику\n\n"
+            "Наша миссия - помочь вашим растениям процветать!"
+        )
+        desc_text.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #34495E;
+                line-height: 1.6;
+                padding: 10px;
+            }
+        """)
+        desc_text.setWordWrap(True)
+        general_layout.addWidget(desc_text)
+        content_layout.addWidget(general_group)
+
+        # Секция: Быстрые подсказки
+        tips_group = QGroupBox("💡 Быстрые подсказки")
+        tips_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 16px;
+                border: 2px solid #3498db;
+                border-radius: 10px;
+                padding-top: 15px;
+                background-color: white;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 10px 0 10px;
+                color: #3498db;
+            }
+        """)
+
+        tips_layout = QVBoxLayout(tips_group)
+        tips_layout.setSpacing(8)
+
+        tips = [
+            "📚 <b>Справочник растений</b>: Кликните на карточку растения для детальной информации",
+            "🌱 <b>Мои растения</b>: Добавляйте свои растения с фото для лучшего отслеживания",
+            "📓 <b>Журнал ухода</b>: Регулярно вносите записи о поливе и уходе",
+            "⚙️ <b>Настройки</b>: Обновите свой профиль и смените пароль при необходимости",
+            "🔍 <b>Поиск</b>: Используйте поиск в справочнике и своих растениях",
+            "📱 <b>Фото растений</b>: Добавляйте фото для визуального отслеживания роста"
+        ]
+
+        for tip in tips:
+            tip_label = QLabel(f"• {tip}")
+            tip_label.setStyleSheet("""
+                QLabel {
+                    font-size: 13px;
+                    color: #2C3E50;
+                    padding: 5px 10px;
+                }
+            """)
+            tip_label.setWordWrap(True)
+            tips_layout.addWidget(tip_label)
+
+        content_layout.addWidget(tips_group)
+
+        # Секция: Частые вопросы
+        faq_group = QGroupBox("❓ Частые вопросы")
+        faq_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 16px;
+                border: 2px solid #9b59b6;
+                border-radius: 10px;
+                padding-top: 15px;
+                background-color: white;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 10px 0 10px;
+                color: #9b59b6;
+            }
+        """)
+
+        faq_layout = QVBoxLayout(faq_group)
+        faq_layout.setSpacing(12)
+
+        faqs = [
+            ("<b>Как добавить растение в мою коллекцию?</b>",
+             "Перейдите в раздел 'Мои растения' → Нажмите кнопку 'Добавить' → Заполните информацию о растении → Сохраните."),
+
+            ("<b>Как вести журнал ухода?</b>",
+             "Выберите растение из списка → Укажите тип ухода (полив, удобрение и т.д.) → Добавьте заметки → Сохраните запись."),
+
+            ("<b>Можно ли добавить несколько фото одного растения?</b>",
+             "Да, при добавлении или редактировании растения вы можете загрузить фотографию. В будущих обновлениях будет поддержка нескольких фото."),
+
+            ("<b>Как удалить растение из моей коллекции?</b>",
+             "Выберите растение кликом на карточке → Нажмите кнопку 'Удалить' → Подтвердите удаление.")
+        ]
+
+        for question, answer in faqs:
+            question_label = QLabel(f"❔ {question}")
+            question_label.setStyleSheet("""
+                QLabel {
+                    font-size: 14px;
+                    color: #2C3E50;
+                    font-weight: bold;
+                }
+            """)
+            question_label.setWordWrap(True)
+            faq_layout.addWidget(question_label)
+
+            answer_label = QLabel(f"💡 {answer}")
+            answer_label.setStyleSheet("""
+                QLabel {
+                    font-size: 13px;
+                    color: #34495E;
+                    margin-left: 10px;
+                    padding: 5px 10px;
+                    background-color: #F8F9FA;
+                    border-radius: 5px;
+                }
+            """)
+            answer_label.setWordWrap(True)
+            faq_layout.addWidget(answer_label)
+            faq_layout.addSpacing(10)
+
+        content_layout.addWidget(faq_group)
+
+        # Секция: Контакты и поддержка
+        support_group = QGroupBox("📞 Контакты и поддержка")
+        support_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 16px;
+                border: 2px solid #e74c3c;
+                border-radius: 10px;
+                padding-top: 15px;
+                background-color: white;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 10px 0 10px;
+                color: #e74c3c;
+            }
+        """)
+
+        support_layout = QVBoxLayout(support_group)
+        support_layout.setSpacing(10)
+
+        support_text = QLabel(
+            "Если у вас возникли вопросы или проблемы:\n\n"
+            "📧 <b>Email поддержки</b>: support@florarium.app\n"
+            "🌐 <b>Веб-сайт</b>: www.florarium.app\n"
+            "📱 <b>Версия приложения</b>: 1.0.0\n\n"
+            "<i>Мы всегда готовы помочь!</i>"
+        )
+        support_text.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #2C3E50;
+                line-height: 1.6;
+                padding: 15px;
+                background-color: rgba(231, 76, 60, 0.05);
+                border-radius: 8px;
+            }
+        """)
+        support_text.setWordWrap(True)
+        support_layout.addWidget(support_text)
+        content_layout.addWidget(support_group)
+
+        # Символическое сообщение
+        symbol_group = QFrame()
+        symbol_group.setStyleSheet("""
+            QFrame {
+                background-color: #E8F5E9;
+                border: 2px dashed #93a267;
+                border-radius: 10px;
+                padding: 20px;
+                margin-top: 20px;
+            }
+        """)
+
+        symbol_layout = QVBoxLayout(symbol_group)
+        symbol_layout.setAlignment(Qt.AlignCenter)
+
+        symbol_text = QLabel("🌿 Пусть ваши растения всегда будут здоровыми и красивыми! 🌸")
+        symbol_text.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                color: #485935;
+                font-weight: bold;
+                padding: 10px;
+            }
+        """)
+        symbol_text.setAlignment(Qt.AlignCenter)
+        symbol_layout.addWidget(symbol_text)
+
+        content_layout.addWidget(symbol_group)
+
+        # Добавляем растягивающийся элемент
+        content_layout.addStretch()
+
+        # Устанавливаем содержимое scroll area
+        scroll_area.setWidget(content_widget)
+
+        # Основной layout
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(scroll_area)
+
+        self.stacked_widget.addWidget(page)
+
+
+
+
+    # МЕТОДЫ ДЛЯ РАБОТЫ С ДАННЫМИ
+
+    def load_user_data(self):
+        """Загрузка данных пользователя"""
+        try:
+            user = self.service.User.get_by_id(self.user_id)
+            welcome_text = f"👤 <b>{user.first_name} {user.last_name}</b><br>"
+            welcome_text += f"<small>{user.email}</small>"
+            self.sidebar_user_info.setText(welcome_text)
+        except Exception as e:
+            print(f"Ошибка загрузки пользователя: {e}")
+
+    def load_all_data(self):
+        """Загрузка всех данных"""
+        self.load_plants()
+        self.load_my_plants()
+        self.load_journal_cards()
+
+    def load_plants(self):
+        """Загрузка растений из справочника"""
+        try:
+            print("=" * 50)
+            print("ЗАГРУЗКА РАСТЕНИЙ:")
+
+            # Загружаем растения
+            plants = list(self.service.Plant.select(
+                self.service.Plant.id,
+                self.service.Plant.scientific_name,
+                self.service.Plant.main_photo
+            ).dicts())
+
+            print(f"\nЗагружено растений: {len(plants)}")
+            for plant in plants:
+                print(f"\nРастение: id={plant.get('id')}, name='{plant.get('scientific_name')}'")
+                print(f"  Main Photo ID: {plant.get('main_photo')}")
+
+                # Загружаем полный объект растения для получения фото
+                try:
+                    plant_obj = self.service.Plant.get_by_id(plant['id'])
+                    if plant_obj.main_photo:
+                        print(f"  Photo URL: {plant_obj.main_photo.photo_url}")
+                except Exception as e:
+                    print(f"  Ошибка загрузки объекта растения: {e}")
+
+            self.display_plants(plants)
+            print("=" * 50)
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось загрузить растения: {str(e)}")
+            print(f"Ошибка в load_plants: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def search_plants(self):
+        """Поиск растений"""
+        search_text = self.search_input.text().strip()
+        if not search_text:
+            self.load_plants()
+            return
+
+        try:
+            plants = list(self.service.Plant.select().where(
+                self.service.Plant.scientific_name.contains(search_text) |
+                self.service.Plant.description.contains(search_text)
+            ).dicts())
+            self.display_plants(plants)
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка поиска: {str(e)}")
+
+    def clear_search(self):
+        """Очистка поиска"""
+        self.search_input.clear()
+        self.load_plants()
+
+    def load_my_plants(self):
+        """Загрузка растений пользователя"""
+        try:
+            my_plants = list(self.service.PlantInstance.select().where(
+                self.service.PlantInstance.user == self.user_id
+            ).dicts())
+
+            # Отображаем растения в галерее
+            self.display_my_plants(my_plants)
+            self.load_plant_combo()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Не удалось загрузить ваши растения: {str(e)}")
+
+    def show_my_plant_details(self, plant_data=None):
+        """Показать детали выбранного растения пользователя"""
+        if plant_data is None:
+            QMessageBox.information(self, "Информация",
+                                   "Нажмите на кнопку 🔍 на карточке растения для просмотра деталей")
+            return
+
+        # Если переданы данные растения
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"🌿 {plant_data.get('nickname', 'Мое растение')}")
+        dialog.setFixedSize(500, 600)
+
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #F5F5F5;
+            }
+        """)
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
+
+        try:
+            # Получаем полную информацию о растении
+            plant = self.service.PlantInstance.get_by_id(plant_data['id'])
+            base_plant = plant.plant  # Растение из справочника
+
+            # Заголовок
+            display_name = plant.nickname if plant.nickname else base_plant.scientific_name
+            title_label = QLabel(display_name)
+            title_label.setStyleSheet("""
+                QLabel {
+                    font-size: 22px;
+                    font-weight: bold;
+                    color: #2C3E50;
+                    padding-bottom: 8px;
+                    border-bottom: 2px solid #93a267;
+                    margin-bottom: 10px;
+                }
+            """)
+            layout.addWidget(title_label)
+
+            # Scroll area
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setStyleSheet("""
+                QScrollArea {
+                    border: none;
+                    background-color: transparent;
+                }
+            """)
+
+            content_widget = QWidget()
+            content_layout = QVBoxLayout(content_widget)
+            content_layout.setSpacing(10)
+
+            info_style = """
+                font-size: 14px;
+                color: #34495E;
+                padding: 12px;
+                background-color: white;
+                border-radius: 8px;
+                border: 1px solid #DDD;
+                line-height: 1.4;
+            """
+
+            # Базовое растение
+            if base_plant:
+                base_info = QLabel(f"<b>Вид:</b> {base_plant.scientific_name}")
+                base_info.setStyleSheet(info_style)
+                content_layout.addWidget(base_info)
+
+            # Дата приобретения
+            if plant.acquisition_date:
+                date_info = QLabel(f"<b>Дата приобретения:</b> {plant.acquisition_date}")
+                date_info.setStyleSheet(info_style)
+                content_layout.addWidget(date_info)
+
+            # Возраст
+            if plant.age:
+                age_info = QLabel(f"<b>Возраст:</b> {plant.age} мес.")
+                age_info.setStyleSheet(info_style)
+                content_layout.addWidget(age_info)
+
+            # Состояние здоровья
+            status_dict = {
+                'excellent': 'Отличное 🌟',
+                'good': 'Хорошее ✅',
+                'fair': 'Среднее ⚠️',
+                'poor': 'Плохое ❗',
+                'critical': 'Критическое 💀'
+            }
+            status = status_dict.get(plant.health_status, plant.health_status)
+            status_info = QLabel(f"<b>Состояние здоровья:</b> {status}")
+            status_info.setStyleSheet(info_style)
+            content_layout.addWidget(status_info)
+
+            # Местоположение
+            if plant.room:
+                room_info = QLabel(f"<b>Комната:</b> {plant.room}")
+                room_info.setStyleSheet(info_style)
+                content_layout.addWidget(room_info)
+
+            # Примечания к местоположению
+            if plant.location_notes:
+                location_info = QLabel(f"<b>Примечания к местоположению:</b><br>{plant.location_notes}")
+                location_info.setWordWrap(True)
+                location_info.setStyleSheet(info_style)
+                content_layout.addWidget(location_info)
+
+            # Описание
+            if plant.description:
+                desc_info = QLabel(f"<b>Описание:</b><br>{plant.description}")
+                desc_info.setWordWrap(True)
+                desc_info.setStyleSheet(info_style)
+                content_layout.addWidget(desc_info)
+
+            # Индивидуальный уход
+            if plant.custom_care_notes:
+                care_info = QLabel(f"<b>Индивидуальные заметки по уходу:</b><br>{plant.custom_care_notes}")
+                care_info.setWordWrap(True)
+                care_info.setStyleSheet(info_style)
+                content_layout.addWidget(care_info)
+
+            # График полива
+            if plant.watering_schedule:
+                water_info = QLabel(f"<b>График полива:</b> {plant.watering_schedule}")
+                water_info.setStyleSheet(info_style)
+                content_layout.addWidget(water_info)
+
+            # Дата создания
+            created_info = QLabel(f"<b>Дата добавления:</b> {plant.created_at}")
+            created_info.setStyleSheet(info_style)
+            content_layout.addWidget(created_info)
+
+            # Пустое пространство
+            content_layout.addStretch()
+
+            scroll_area.setWidget(content_widget)
+            layout.addWidget(scroll_area)
+
+            # Кнопка закрытия
+            btn_close = QPushButton("Закрыть")
+            btn_close.setFixedHeight(40)
+            btn_close.setStyleSheet("""
+                QPushButton {
+                    background-color: #93a267;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    min-width: 100px;
+                }
+                QPushButton:hover {
+                    background-color: #71804e;
+                }
+                QPushButton:pressed {
+                    background-color: #5a663c;
+                }
+            """)
+            btn_close.clicked.connect(dialog.accept)
+            layout.addWidget(btn_close)
+
+        except Exception as e:
+            error_label = QLabel(f"Ошибка загрузки данных: {str(e)}")
+            error_label.setStyleSheet("color: #E74C3C; font-weight: bold; padding: 10px;")
+            layout.addWidget(error_label)
+
+        dialog.exec()
+
+    def create_details_style_dialog(self, title, width=500, height=700):
+        """Создать диалоговое окно в стиле окна просмотра деталей"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        dialog.setFixedSize(width, height)
+
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #F5F5F5;
+            }
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #E0E0E0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
+        main_layout = QVBoxLayout(dialog)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(12)
+
+        # Заголовок
+        title_label = QLabel(title)
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 22px;
+                font-weight: bold;
+                color: #2C3E50;
+                padding-bottom: 8px;
+                border-bottom: 2px solid #93a267;
+                margin-bottom: 10px;
+            }
+        """)
+        main_layout.addWidget(title_label)
+
+        # Scroll area для содержимого
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameStyle(QScrollArea.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        content_widget = QWidget()
+        self.dialog_content_layout = QVBoxLayout(content_widget)
+        self.dialog_content_layout.setContentsMargins(0, 0, 10, 0)
+        self.dialog_content_layout.setSpacing(10)
+
+        scroll_area.setWidget(content_widget)
+        main_layout.addWidget(scroll_area, 1)  # 1 = растягивается
+
+        # Контейнер для кнопок
+        self.dialog_button_container = QWidget()
+        self.dialog_button_layout = QHBoxLayout(self.dialog_button_container)
+        self.dialog_button_layout.setContentsMargins(0, 10, 0, 0)
+
+        main_layout.addWidget(self.dialog_button_container)
+
+        return dialog
+
+    def create_details_style_section(self, title, widget):
+        """Создать секцию в стиле окна деталей"""
+        section_label_style = """
+            font-weight: bold;
+            color: #485935;
+            font-size: 15px;
+            margin-top: 8px;
+            margin-bottom: 3px;
+        """
+
+        # Стиль для содержимого секций
+        section_content_style = """
+            font-size: 13px;
+            color: #34495E;
+            padding: 10px;
+            background-color: white;
+            border-radius: 6px;
+            border: 1px solid #DDD;
+            line-height: 1.4;
+        """
+
+        # Создаем метку
+        label = QLabel(title)
+        label.setStyleSheet(section_label_style)
+        self.dialog_content_layout.addWidget(label)
+
+        # Настраиваем стиль виджета
+        if isinstance(widget, (QLineEdit, QTextEdit, QDateEdit, QSpinBox, QComboBox)):
+            widget.setStyleSheet(section_content_style)
+        elif isinstance(widget, QFrame):
+            widget.setStyleSheet("""
+                QFrame {
+                    background-color: white;
+                    border: 1px solid #DDD;
+                    border-radius: 6px;
+                    padding: 10px;
+                }
+            """)
+
+        # Добавляем виджет
+        self.dialog_content_layout.addWidget(widget)
+
+        return widget
+
+
+    def load_plant_combo(self):
+        """Загрузить растения пользователя в комбобокс журнала"""
+        try:
+            if hasattr(self, 'journal_plant_combo'):
+                combo = self.journal_plant_combo
+            elif hasattr(self, 'care_plant'):
+                combo = self.care_plant
+            else:
+                print("Нет комбобокса для загрузки растений")
+                return
+
+            # Сохраняем текущий выбор
+            current_index = combo.currentIndex()
+            current_data = combo.currentData() if current_index >= 0 else None
+
+            combo.clear()
+            combo.addItem("-- Выберите растение --", None)
+
+            # Получаем растения пользователя
+            my_plants = list(self.service.PlantInstance.select().where(
+                self.service.PlantInstance.user == self.user_id
+            ))
+
+            plant_count = 0
+            for plant in my_plants:
+                try:
+                    # Пытаемся получить базовое растение
+                    if hasattr(plant, 'plant') and plant.plant:
+                        base_name = plant.plant.scientific_name
+                    else:
+                        base_name = "Растение"
+
+                    display_name = plant.nickname if plant.nickname and plant.nickname != 'None' else base_name
+                    combo.addItem(f"🌿 {display_name}", plant.id)
+                    plant_count += 1
+
+                except Exception as e:
+                    print(f"Ошибка загрузки растения {plant.id} для комбобокса: {e}")
+                    continue
+
+            # Если растений нет
+            if plant_count == 0:
+                combo.addItem("❌ У вас пока нет растений", None)
+                if hasattr(self, 'btn_submit_journal'):
+                    self.btn_submit_journal.setEnabled(False)
+                elif hasattr(self, 'btn_add_journal'):
+                    self.btn_add_journal.setEnabled(False)
+            else:
+                if hasattr(self, 'btn_submit_journal'):
+                    self.btn_submit_journal.setEnabled(True)
+                elif hasattr(self, 'btn_add_journal'):
+                    self.btn_add_journal.setEnabled(True)
+
+            # Восстанавливаем предыдущий выбор если возможно
+            if current_data and plant_count > 0:
+                for i in range(1, combo.count()):
+                    if combo.itemData(i) == current_data:
+                        combo.setCurrentIndex(i)
+                        break
+
+        except Exception as e:
+            print(f"Ошибка загрузки списка растений для журнала: {e}")
+            if hasattr(self, 'journal_plant_combo'):
+                self.journal_plant_combo.clear()
+                self.journal_plant_combo.addItem("⚠️ Ошибка загрузки растений", None)
+            elif hasattr(self, 'care_plant'):
+                self.care_plant.clear()
+                self.care_plant.addItem("⚠️ Ошибка загрузки растений", None)
+
+    def add_my_plant(self):
+        """Добавить новое растение пользователю с фото"""
+        dialog = self.create_details_style_dialog("➕ Добавить растение", 500, 600)
+
+        # Секция фотографии
+        photo_container = QFrame()
+        photo_container.setFixedHeight(180)
+
+        photo_layout = QVBoxLayout(photo_container)
+        photo_layout.setAlignment(Qt.AlignCenter)
+        photo_layout.setSpacing(10)
+
+        # Превью фотографии
+        photo_preview = QLabel("🌿 Нажмите 'Выбрать фото'")
+        photo_preview.setAlignment(Qt.AlignCenter)
+        photo_preview.setFixedSize(140, 140)
+        photo_preview.setStyleSheet("""
+            QLabel {
+                border: 1px solid #DDD;
+                border-radius: 5px;
+                background-color: #F8F9FA;
+                color: #7F8C8D;
+                font-size: 14px;
+            }
+        """)
+
+        # Переменные для хранения данных фото
+        photo_path = None
+        photo_data = None
+
+        # Кнопки фото
+        photo_buttons = QHBoxLayout()
+        photo_buttons.setAlignment(Qt.AlignCenter)
+
+        def load_photo():
+            nonlocal photo_path, photo_data
+            file_path, _ = QFileDialog.getOpenFileName(
+                dialog, "Выберите фотографию", "",
+                "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
+            )
+            if file_path:
+                photo_path = file_path
+                pixmap = QPixmap(file_path)
+                if not pixmap.isNull():
+                    pixmap = pixmap.scaled(140, 140, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    photo_preview.setPixmap(pixmap)
+                    photo_preview.setText("")
+                    try:
+                        with open(file_path, 'rb') as f:
+                            photo_data = f.read()
+                    except Exception as e:
+                        print(f"Ошибка чтения файла: {e}")
+                        photo_data = None
+
+        def remove_photo():
+            nonlocal photo_path, photo_data
+            photo_path = None
+            photo_data = None
+            photo_preview.setPixmap(QPixmap())
+            photo_preview.setText("🌿 Нажмите 'Выбрать фото'")
+
+        btn_add_photo = QPushButton("📁 Выбрать фото")
+        btn_add_photo.clicked.connect(load_photo)
+        btn_add_photo.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 15px;
+                font-size: 13px;
+            }
+            QPushButton:hover { background-color: #2980b9; }
+        """)
+
+        btn_remove_photo = QPushButton("🗑️ Удалить фото")
+        btn_remove_photo.clicked.connect(remove_photo)
+        btn_remove_photo.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 15px;
+                font-size: 13px;
+            }
+            QPushButton:hover { background-color: #c0392b; }
+        """)
+
+        photo_buttons.addWidget(btn_add_photo)
+        photo_buttons.addWidget(btn_remove_photo)
+
+        photo_layout.addWidget(photo_preview)
+        photo_layout.addLayout(photo_buttons)
+
+        # Добавляем секцию фото
+        self.create_details_style_section("📷 Фотография растения:", photo_container)
+
+        # Название растения
+        name_input = QLineEdit()
+        name_input.setPlaceholderText("Монстерка, Фикус, Кактус...")
+        self.create_details_style_section("🏷️ Название растения:", name_input)
+
+        # Описание
+        desc_input = QTextEdit()
+        desc_input.setMaximumHeight(80)
+        desc_input.setPlaceholderText("Опишите ваше растение...")
+        self.create_details_style_section("📝 Описание:", desc_input)
+
+        # Дата приобретения
+        date_input = QDateEdit()
+        date_input.setCalendarPopup(True)
+        date_input.setDate(QDate.currentDate())
+        date_input.setDisplayFormat("dd.MM.yyyy")
+        self.create_details_style_section("📅 Дата приобретения:", date_input)
+
+        # Возраст
+        age_input = QSpinBox()
+        age_input.setMinimum(0)
+        age_input.setMaximum(1200)
+        self.create_details_style_section("🎂 Возраст (в месяцах):", age_input)
+
+        # Состояние здоровья
+        health_combo = QComboBox()
+        health_items = [
+            ("Отличное 🌟", "excellent"),
+            ("Хорошее ✅", "good"),
+            ("Среднее ⚠️", "fair"),
+            ("Плохое ❗", "poor"),
+            ("Критическое 💀", "critical")
+        ]
+
+        for display_text, value in health_items:
+            health_combo.addItem(display_text, value)
+
+        health_combo.setCurrentIndex(1)
+        self.create_details_style_section("💚 Состояние здоровья:", health_combo)
+
+        # Местоположение
+        room_input = QLineEdit()
+        room_input.setPlaceholderText("Гостиная, Кухня, Спальня...")
+        self.create_details_style_section("📍 Комната/Местоположение:", room_input)
+
+        # Примечания к местоположению
+        notes_input = QTextEdit()
+        notes_input.setMaximumHeight(60)
+        notes_input.setPlaceholderText("На подоконнике, в углу комнаты...")
+        self.create_details_style_section("📌 Примечания к местоположению:", notes_input)
+
+        # Добавляем растягивающийся элемент
+        self.dialog_content_layout.addStretch()
+
+        def save_plant():
+            from datetime import datetime, date
+            if not name_input.text().strip():
+                self.show_warning_message("Ошибка", "Введите название растения")
+                return
+
+            try:
+                # Создаем PlantInstance
+                plant_instance = self.service.PlantInstance.create(
+                    user=self.user_id,
+                    nickname=name_input.text().strip(),
+                    description=desc_input.toPlainText().strip() or None,
+                    acquisition_date=date_input.date().toPython(),
+                    age=age_input.value() if age_input.value() > 0 else None,
+                    health_status=health_combo.currentData(),
+                    room=room_input.text().strip() or None,
+                    location_notes=notes_input.toPlainText().strip() or None
+                )
+
+                # Сохраняем фотографию если есть
+                if photo_data:
+                    # Создаем папку для фото если её нет
+                    photos_dir = "user_photos"
+                    if not os.path.exists(photos_dir):
+                        os.makedirs(photos_dir)
+
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"plant_{plant_instance.id}_{timestamp}.jpg"
+                    file_path = os.path.join(photos_dir, filename)
+
+                    # Сохраняем фото на диск
+                    with open(file_path, 'wb') as f:
+                        f.write(photo_data)
+
+                    self.service.InstancePhoto.create(
+                        instance=plant_instance,
+                        photo_url=file_path,
+                        is_current=True
+                    )
+
+                self.show_info_message("Успех", "Растение добавлено!")
+                dialog.accept()
+                self.load_my_plants()
+
+            except Exception as e:
+                self.show_error_message("Ошибка", f"Не удалось добавить растение: {str(e)}")
+
+        def cancel():
+            dialog.reject()
+
+        btn_save = QPushButton("💾 Сохранить")
+        btn_save.clicked.connect(save_plant)
+        btn_save.setStyleSheet("""
+            QPushButton {
+                background-color: #93a267;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 8px 20px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 100px;
+            }
+            QPushButton:hover {
+                background-color: #71804e;
+            }
+            QPushButton:pressed {
+                background-color: #5a663c;
+            }
+        """)
+
+        btn_cancel = QPushButton("❌ Отмена")
+        btn_cancel.clicked.connect(cancel)
+        btn_cancel.setStyleSheet("""
+            QPushButton {
+                background-color: #95A5A6;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 8px 20px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 100px;
+            }
+            QPushButton:hover {
+                background-color: #7F8C8D;
+            }
+            QPushButton:pressed {
+                background-color: #6C7A89;
+            }
+        """)
+
+        self.dialog_button_layout.addStretch()
+        self.dialog_button_layout.addWidget(btn_save)
+        self.dialog_button_layout.addWidget(btn_cancel)
+
+        # Центрируем окно
+        dialog.move(
+            self.x() + (self.width() - dialog.width()) // 2,
+            self.y() + (self.height() - dialog.height()) // 2
+        )
+
+        dialog.exec()
+
+    def update_my_plants_cards_style(self):
+        """Обновить стили всех карточек растений (подсветить выбранную)"""
+        for i in range(self.my_plants_layout.count()):
+            widget = self.my_plants_layout.itemAt(i).widget()
+            if widget and hasattr(widget, 'plant_id'):
+                is_selected = hasattr(self, 'selected_plant_card') and self.selected_plant_card == widget.plant_id
+
+                if is_selected:
+                    widget.setStyleSheet("""
+                        QFrame {
+                            background-color: white;
+                            border: 3px solid #93a267;
+                            border-radius: 12px;
+                            padding: 0px;
+                        }
+                    """)
+                else:
+                    widget.setStyleSheet("""
+                        QFrame {
+                            background-color: white;
+                            border: 1px solid #E0E0E0;
+                            border-radius: 12px;
+                            padding: 0px;
+                        }
+                    """)
+
+    def delete_my_plant(self, plant_data=None):
+        """Удалить растение пользователя"""
+        if plant_data is None:
+            if hasattr(self, 'selected_plant_card') and self.selected_plant_card:
+                if hasattr(self, 'selected_plant_data') and self.selected_plant_data:
+                    plant_data = self.selected_plant_data
+                    print(f"DEBUG Using selected_plant_data: {plant_data}")
+                else:
+                    try:
+                        plant_obj = self.service.PlantInstance.get_by_id(self.selected_plant_card)
+                        if plant_obj:
+                            plant_data = {
+                                'id': plant_obj.id,
+                                'nickname': plant_obj.nickname or 'Без названия'
+                            }
+                            print(f"DEBUG Created plant_data from DB: {plant_data}")
+                        else:
+                            self.show_warning_message("Внимание", "Растение не найдено в базе данных")
+                            return
+                    except Exception as e:
+                        self.show_warning_message("Внимание", f"Ошибка получения данных: {str(e)}")
+                        return
+            else:
+                self.show_warning_message("Внимание", "Выберите растение, кликнув на его карточку")
+                return
+
+        if isinstance(plant_data, dict):
+            plant_id = plant_data.get('id')
+            plant_name = plant_data.get('nickname') or 'Без названия'
+
+            if not plant_id:
+                self.show_warning_message("Ошибка", "Не найден ID растения")
+                return
+
+            # Используем новый диалог подтверждения
+            if self.show_confirmation_dialog("Подтверждение",
+                                           f"Удалить растение '{plant_name}' из вашей коллекции?"):
+                try:
+                    try:
+                        photos = list(self.service.InstancePhoto.select().where(
+                            self.service.InstancePhoto.instance == plant_id
+                        ))
+
+                        # Удаляем файлы с диска
+                        for photo in photos:
+                            if photo.photo_url and os.path.exists(photo.photo_url):
+                                try:
+                                    os.remove(photo.photo_url)
+                                except Exception as e:
+                                    print(f"Не удалось удалить файл {photo.photo_url}: {e}")
+
+                        # Удаляем записи из базы
+                        self.service.InstancePhoto.delete().where(
+                            self.service.InstancePhoto.instance == plant_id
+                        ).execute()
+
+                        print(f"DEBUG: Удалено {len(photos)} фотографий для растения {plant_id}")
+
+                    except Exception as photo_e:
+                        print(f"Ошибка при удалении фотографий: {photo_e}")
+
+                    try:
+                        self.service.CareJournal.delete().where(
+                            self.service.CareJournal.instance_id == plant_id
+                        ).execute()
+                    except Exception as journal_e:
+                        print(f"Ошибка при удалении записей журнала: {journal_e}")
+
+                    # Удаляем само растение
+                    self.service.PlantInstance.delete_by_id(plant_id)
+
+                    self.show_info_message("Успех", "Растение удалено")
+
+                    # Сбрасываем выбор
+                    if hasattr(self, 'selected_plant_card'):
+                        delattr(self, 'selected_plant_card')
+                    if hasattr(self, 'selected_plant_data'):
+                        delattr(self, 'selected_plant_data')
+
+                    self.load_my_plants()  # Обновляем галерею
+
+                except Exception as e:
+                    self.show_error_message("Ошибка", f"Не удалось удалить: {str(e)}")
+        else:
+            if hasattr(self, 'selected_plant_card') and self.selected_plant_card:
+                try:
+                    plant_obj = self.service.PlantInstance.get_by_id(self.selected_plant_card)
+                    if plant_obj:
+                        plant_name = plant_obj.nickname or 'Без названия'
+
+                        if self.show_confirmation_dialog("Подтверждение",
+                                                       f"Удалить растение '{plant_name}' из вашей коллекции?"):
+                            try:
+                                self.service.InstancePhoto.delete().where(
+                                    self.service.InstancePhoto.instance == self.selected_plant_card
+                                ).execute()
+                            except Exception as photo_e:
+                                print(f"Ошибка при удалении фотографий: {photo_e}")
+
+                            try:
+                                self.service.CareJournal.delete().where(
+                                    self.service.CareJournal.instance_id == self.selected_plant_card
+                                ).execute()
+                            except Exception as journal_e:
+                                print(f"Ошибка при удалении записей журнала: {journal_e}")
+
+                            # Удаляем растение
+                            self.service.PlantInstance.delete_by_id(self.selected_plant_card)
+                            self.show_info_message("Успех", "Растение удалено")
+
+                            # Сбрасываем выбор
+                            if hasattr(self, 'selected_plant_card'):
+                                delattr(self, 'selected_plant_card')
+                            if hasattr(self, 'selected_plant_data'):
+                                delattr(self, 'selected_plant_data')
+
+                            self.load_my_plants()
+                    else:
+                        self.show_warning_message("Ошибка", "Растение не найдено")
+                except Exception as e:
+                    self.show_error_message("Ошибка", f"Не удалось удалить: {str(e)}")
+            else:
+                self.show_warning_message("Ошибка", "Не удалось определить растение для удаления")
+
+    def edit_my_plant(self, plant_data=None):
+        """Редактировать растение пользователя"""
+        print(f"DEBUG edit_my_plant called: plant_data={plant_data}")
+
+        if plant_data is None or plant_data is False:
+            print(f"DEBUG plant_data is None/False, trying to get selected plant")
+            if hasattr(self, 'selected_plant_card') and self.selected_plant_card:
+                # Пытаемся получить данные из уже сохраненного selected_plant_data
+                if hasattr(self, 'selected_plant_data') and self.selected_plant_data:
+                    plant_data = self.selected_plant_data
+                    print(f"DEBUG Using selected_plant_data: {plant_data}")
+                else:
+                    # Находим растение по ID
+                    try:
+                        plant_obj = self.service.PlantInstance.get_by_id(self.selected_plant_card)
+                        if plant_obj:
+                            # Создаем корректный словарь с данными
+                            plant_data = {
+                                'id': plant_obj.id,
+                                'nickname': plant_obj.nickname or 'Без названия',
+                                'description': plant_obj.description,
+                                'acquisition_date': plant_obj.acquisition_date,
+                                'age': plant_obj.age,
+                                'health_status': plant_obj.health_status,
+                                'room': plant_obj.room,
+                                'location_notes': plant_obj.location_notes
+                            }
+                            print(f"DEBUG Created plant_data from DB: {plant_data}")
+                        else:
+                            self.show_warning_message("Внимание", "Растение не найдено")
+                            return
+                    except Exception as e:
+                        self.show_warning_message("Ошибка", f"Не удалось получить данные: {str(e)}")
+                        return
+            else:
+                self.show_warning_message("Внимание",
+                                        "Выберите растение, кликнув на его карточку в галерее")
+                return
+
+        if not isinstance(plant_data, dict):
+            self.show_warning_message("Ошибка",
+                                    f"Некорректные данные растения. Выберите растение в галерее")
+            return
+
+        # Проверяем, есть ли ID
+        plant_id = plant_data.get('id')
+        if not plant_id:
+            self.show_warning_message("Ошибка", "Не найден ID растения")
+            return
+
+        # Загружаем полные данные растения для редактирования
+        try:
+            plant_obj = self.service.PlantInstance.get_by_id(plant_id)
+
+            # Получаем текущую фотографию растения
+            current_photo = None
+            current_photo_url = None
+            try:
+                photos = list(self.service.InstancePhoto.select().where(
+                    self.service.InstancePhoto.instance == plant_obj,
+                    self.service.InstancePhoto.is_current == True
+                ))
+                if photos:
+                    current_photo = photos[0]
+                    current_photo_url = current_photo.photo_url
+            except Exception as e:
+                print(f"Ошибка загрузки фото: {e}")
+
+            # Создаем диалоговое окно
+            dialog = self.create_details_style_dialog(
+                f"✏️ Редактировать: {plant_obj.nickname or 'Мое растение'}",
+                500, 600
+            )
+
+            # Секция фотографии
+            photo_container = QFrame()
+            photo_container.setFixedHeight(180)
+
+            photo_layout = QVBoxLayout(photo_container)
+            photo_layout.setAlignment(Qt.AlignCenter)
+            photo_layout.setSpacing(10)
+
+            # Превью фотографии
+            photo_preview = QLabel()
+            photo_preview.setAlignment(Qt.AlignCenter)
+            photo_preview.setFixedSize(140, 140)
+            photo_preview.setStyleSheet("""
+                QLabel {
+                    border: 1px solid #DDD;
+                    border-radius: 5px;
+                    background-color: #F8F9FA;
+                }
+            """)
+
+            # Переменные для хранения данных фото
+            photo_path = None
+            photo_data = None
+            should_delete_current_photo = False
+
+            # Загружаем текущее фото если есть
+            if current_photo_url:
+                try:
+                    # Если путь относительный, делаем его абсолютным
+                    if not os.path.isabs(current_photo_url):
+                        base_dir = os.path.dirname(os.path.abspath(__file__))
+                        current_photo_url = os.path.join(base_dir, current_photo_url)
+
+                    if os.path.exists(current_photo_url):
+                        pixmap = QPixmap(current_photo_url)
+                        if not pixmap.isNull():
+                            pixmap = pixmap.scaled(140, 140, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                            photo_preview.setPixmap(pixmap)
+                            with open(current_photo_url, 'rb') as f:
+                                photo_data = f.read()
+                        else:
+                            photo_preview.setText("🌿\nФото не найдено")
+                    else:
+                        photo_preview.setText("🌿\nФото не найдено")
+                except Exception as e:
+                    print(f"Ошибка загрузки текущего фото: {e}")
+                    photo_preview.setText("🌿\nОшибка загрузки")
+            else:
+                photo_preview.setText("🌿\nНет фото")
+
+            # Кнопки фото
+            photo_buttons = QHBoxLayout()
+            photo_buttons.setAlignment(Qt.AlignCenter)
+
+            def load_photo():
+                nonlocal photo_path, photo_data
+                file_path, _ = QFileDialog.getOpenFileName(
+                    dialog, "Выберите фотографию", "",
+                    "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
+                )
+                if file_path:
+                    photo_path = file_path
+                    # Загружаем фото для предпросмотра
+                    pixmap = QPixmap(file_path)
+                    if not pixmap.isNull():
+                        pixmap = pixmap.scaled(140, 140, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                        photo_preview.setPixmap(pixmap)
+                        photo_preview.setText("")
+                        # Читаем файл как бинарные данные
+                        try:
+                            with open(file_path, 'rb') as f:
+                                photo_data = f.read()
+                        except Exception as e:
+                            print(f"Ошибка чтения файла: {e}")
+                            photo_data = None
+
+            def remove_photo():
+                nonlocal photo_path, photo_data, should_delete_current_photo
+                photo_path = None
+                photo_data = None
+                should_delete_current_photo = True
+                photo_preview.setPixmap(QPixmap())
+                photo_preview.setText("🌿\nНажмите 'Выбрать фото'")
+
+            btn_add_photo = QPushButton("📁 Выбрать фото")
+            btn_add_photo.clicked.connect(load_photo)
+            btn_add_photo.setStyleSheet("""
+                QPushButton {
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 8px 15px;
+                    font-size: 13px;
+                }
+                QPushButton:hover { background-color: #2980b9; }
+            """)
+
+            btn_remove_photo = QPushButton("🗑️ Удалить фото")
+            btn_remove_photo.clicked.connect(remove_photo)
+            btn_remove_photo.setStyleSheet("""
+                QPushButton {
+                    background-color: #e74c3c;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 8px 15px;
+                    font-size: 13px;
+                }
+                QPushButton:hover { background-color: #c0392b; }
+            """)
+
+            photo_buttons.addWidget(btn_add_photo)
+            photo_buttons.addWidget(btn_remove_photo)
+
+            photo_layout.addWidget(photo_preview)
+            photo_layout.addLayout(photo_buttons)
+
+            # Добавляем секцию фото
+            self.create_details_style_section("📷 Фотография растения:", photo_container)
+
+            # Название растения
+            name_input = QLineEdit()
+            name_input.setText(plant_obj.nickname or "")
+            name_input.setPlaceholderText("Мое растение")
+            self.create_details_style_section("🏷️ Название растения:", name_input)
+
+            # Описание
+            desc_input = QTextEdit()
+            desc_input.setPlainText(plant_obj.description or "")
+            desc_input.setMaximumHeight(80)
+            desc_input.setPlaceholderText("Опишите ваше растение...")
+            self.create_details_style_section("📝 Описание:", desc_input)
+
+            # Дата приобретения
+            date_input = QDateEdit()
+            date_input.setCalendarPopup(True)
+            if plant_obj.acquisition_date:
+                date_input.setDate(plant_obj.acquisition_date)
+            else:
+                date_input.setDate(QDate.currentDate())
+            date_input.setDisplayFormat("dd.MM.yyyy")
+            self.create_details_style_section("📅 Дата приобретения:", date_input)
+
+            # Возраст
+            age_input = QSpinBox()
+            age_input.setMinimum(0)
+            age_input.setMaximum(1200)
+            age_input.setValue(plant_obj.age or 0)
+            self.create_details_style_section("🎂 Возраст (в месяцах):", age_input)
+
+            # Состояние здоровья
+            health_combo = QComboBox()
+            health_items = [
+                ("Отличное 🌟", "excellent"),
+                ("Хорошее ✅", "good"),
+                ("Среднее ⚠️", "fair"),
+                ("Плохое ❗", "poor"),
+                ("Критическое 💀", "critical")
+            ]
+
+            for display_text, value in health_items:
+                health_combo.addItem(display_text, value)
+
+            # Устанавливаем текущее значение
+            current_health = plant_obj.health_status or "good"
+            for i in range(health_combo.count()):
+                if health_combo.itemData(i) == current_health:
+                    health_combo.setCurrentIndex(i)
+                    break
+
+            self.create_details_style_section("💚 Состояние здоровья:", health_combo)
+
+            # Местоположение
+            room_input = QLineEdit()
+            room_input.setText(plant_obj.room or "")
+            room_input.setPlaceholderText("Гостиная, Кухня, Спальня...")
+            self.create_details_style_section("📍 Комната/Местоположение:", room_input)
+
+            # Примечания к местоположению
+            notes_input = QTextEdit()
+            notes_input.setPlainText(plant_obj.location_notes or "")
+            notes_input.setMaximumHeight(60)
+            notes_input.setPlaceholderText("На подоконнике, в углу комнаты...")
+            self.create_details_style_section("📌 Примечания к местоположению:", notes_input)
+
+            # Добавляем растягивающийся элемент
+            self.dialog_content_layout.addStretch()
+
+            # Кнопки
+            def save_changes():
+                from datetime import datetime, date
+
+                try:
+                    # Обновляем объект растения
+                    plant_obj.nickname = name_input.text().strip() or None
+                    plant_obj.description = desc_input.toPlainText().strip() or None
+                    plant_obj.acquisition_date = date_input.date().toPython()
+                    plant_obj.age = age_input.value() if age_input.value() > 0 else None
+                    plant_obj.health_status = health_combo.currentData()
+                    plant_obj.room = room_input.text().strip() or None
+                    plant_obj.location_notes = notes_input.toPlainText().strip() or None
+
+                    # Сохраняем изменения в базе
+                    plant_obj.save()
+
+                    # Работаем с фотографиями
+                    if should_delete_current_photo and current_photo:
+                        # Удаляем текущее фото
+                        if current_photo.photo_url and os.path.exists(current_photo.photo_url):
+                            try:
+                                os.remove(current_photo.photo_url)
+                            except Exception as e:
+                                print(f"Не удалось удалить файл: {e}")
+                        current_photo.delete_instance()
+
+                    # Добавляем новое фото если выбрано
+                    if photo_data and photo_path:
+                        # Создаем папку для фото если её нет
+                        photos_dir = "user_photos"
+                        if not os.path.exists(photos_dir):
+                            os.makedirs(photos_dir)
+
+                        # Генерируем уникальное имя файла
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        filename = f"plant_{plant_obj.id}_{timestamp}.jpg"
+                        file_path = os.path.join(photos_dir, filename)
+
+                        # Сохраняем фото на диск
+                        with open(file_path, 'wb') as f:
+                            f.write(photo_data)
+
+                        # Помечаем все старые фото как не текущие
+                        self.service.InstancePhoto.update(is_current=False).where(
+                            self.service.InstancePhoto.instance == plant_obj
+                        ).execute()
+
+                        # Создаем новую запись InstancePhoto
+                        self.service.InstancePhoto.create(
+                            instance=plant_obj,
+                            photo_url=file_path,
+                            is_current=True
+                        )
+
+                    # Обновляем выбранные данные
+                    if hasattr(self, 'selected_plant_data'):
+                        self.selected_plant_data = {
+                            'id': plant_obj.id,
+                            'nickname': plant_obj.nickname or 'Без названия',
+                            'description': plant_obj.description,
+                            'acquisition_date': plant_obj.acquisition_date,
+                            'age': plant_obj.age,
+                            'health_status': plant_obj.health_status,
+                            'room': plant_obj.room,
+                            'location_notes': plant_obj.location_notes
+                        }
+
+                    self.show_info_message("Успех", "Растение успешно обновлено!")
+                    dialog.accept()
+                    self.load_my_plants()  # Обновляем список
+
+                except Exception as e:
+                    self.show_error_message("Ошибка", f"Не удалось сохранить изменения: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+
+            def cancel():
+                dialog.reject()
+
+            btn_save = QPushButton("💾 Сохранить")
+            btn_save.clicked.connect(save_changes)
+            btn_save.setStyleSheet("""
+                QPushButton {
+                    background-color: #93a267;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    min-width: 100px;
+                }
+                QPushButton:hover {
+                    background-color: #71804e;
+                }
+                QPushButton:pressed {
+                    background-color: #5a663c;
+                }
+            """)
+
+            btn_cancel = QPushButton("❌ Отмена")
+            btn_cancel.clicked.connect(cancel)
+            btn_cancel.setStyleSheet("""
+                QPushButton {
+                    background-color: #95A5A6;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    min-width: 100px;
+                }
+                QPushButton:hover {
+                    background-color: #7F8C8D;
+                }
+                QPushButton:pressed {
+                    background-color: #6C7A89;
+                }
+            """)
+
+            self.dialog_button_layout.addStretch()
+            self.dialog_button_layout.addWidget(btn_save)
+            self.dialog_button_layout.addWidget(btn_cancel)
+
+            # Центрируем окно
+            dialog.move(
+                self.x() + (self.width() - dialog.width()) // 2,
+                self.y() + (self.height() - dialog.height()) // 2
+            )
+
+            dialog.exec()
+
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось загрузить данные растения: {str(e)}")
+
+    def search_my_plants(self):
+        """Поиск в моих растениях"""
+        search_text = self.search_my_plants_input.text().strip()
+        if not search_text:
+            self.load_my_plants()
+            return
+
+        try:
+            # Ищем растения пользователя по никнейму или описанию
+            my_plants = list(self.service.PlantInstance.select().where(
+                (self.service.PlantInstance.user == self.user_id) &
+                (
+                    (self.service.PlantInstance.nickname.contains(search_text)) |
+                    (self.service.PlantInstance.description.contains(search_text))
+                )
+            ).dicts())
+            self.display_my_plants(my_plants)
+        except Exception as e:
+            print(f"Ошибка поиска в моих растениях: {e}")
+            QMessageBox.critical(self, "Ошибка", f"Ошибка поиска: {str(e)}")
+
+    def logout(self):
+        """Выход из системы"""
+        self.service.close()
+        self.close()
