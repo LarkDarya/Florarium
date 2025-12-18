@@ -3351,3 +3351,908 @@ class UserWindow(QWidget):
 
         self.stacked_widget.setCurrentIndex(page_index)
 
+
+    def create_stats_page(self):
+        """Создать страницу статистики с экспортом данных"""
+        page = QWidget()
+
+        # Основной layout с прокруткой
+        main_layout = QVBoxLayout(page)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(25)
+
+        # Заголовок
+        title_label = QLabel("📊 Статистика")
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 24px;
+                font-weight: bold;
+                color: #2C3E50;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #93a267;
+            }
+        """)
+        title_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(title_label)
+
+        # Создаем ScrollArea для прокрутки
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QScrollArea.NoFrame)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #F0F0F0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+        """)
+
+        # Контейнер для содержимого
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 10, 0)
+        content_layout.setSpacing(20)
+
+        # Секция экспорта данных
+        export_group = QGroupBox("📤 Экспорт данных")
+        export_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 16px;
+                border: 2px solid #93a267;
+                border-radius: 10px;
+                padding-top: 15px;
+                background-color: white;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 10px 0 10px;
+                color: #485935;
+            }
+        """)
+
+        export_layout = QVBoxLayout(export_group)
+        export_layout.setSpacing(15)
+
+        # Описание
+        export_desc = QLabel("Экспортируйте ваши данные в различных форматах для сохранения или печати:")
+        export_desc.setStyleSheet("""
+            QLabel {
+                color: #485935;
+                font-size: 14px;
+                padding: 5px;
+            }
+        """)
+        export_desc.setWordWrap(True)
+        export_layout.addWidget(export_desc)
+
+        # Кнопки экспорта
+        buttons_grid = QGridLayout()
+        buttons_grid.setSpacing(15)
+
+        export_button_style = """
+        QPushButton {
+            background-color: #93a267;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: bold;
+            font-size: 14px;
+            min-width: 180px;
+            height: 40px;
+        }
+        QPushButton:hover {
+            background-color: #7a8a53;
+        }
+        QPushButton:pressed {
+            background-color: #6a7949;
+        }
+        """
+
+        # Экспорт растений в PDF
+        self.btn_export_plants_pdf = QPushButton("🌱 Экспорт растений\n📄 PDF формат")
+        self.btn_export_plants_pdf.setStyleSheet(export_button_style)
+        self.btn_export_plants_pdf.clicked.connect(lambda: self.export_plants('pdf'))
+        buttons_grid.addWidget(self.btn_export_plants_pdf, 0, 0)
+
+        # Экспорт растений в Word
+        self.btn_export_plants_word = QPushButton("🌱 Экспорт растений\n📝 Word формат")
+        self.btn_export_plants_word.setStyleSheet(export_button_style)
+        self.btn_export_plants_word.clicked.connect(lambda: self.export_plants('word'))
+        buttons_grid.addWidget(self.btn_export_plants_word, 0, 1)
+
+        # Экспорт журнала в PDF
+        self.btn_export_journal_pdf = QPushButton("📓 Экспорт журнала ухода\n📄 PDF формат")
+        self.btn_export_journal_pdf.setStyleSheet(export_button_style)
+        self.btn_export_journal_pdf.clicked.connect(lambda: self.export_journal('pdf'))
+        buttons_grid.addWidget(self.btn_export_journal_pdf, 1, 0)
+
+        # Экспорт журнала в Word
+        self.btn_export_journal_word = QPushButton("📓 Экспорт журнала ухода\n📝 Word формат")
+        self.btn_export_journal_word.setStyleSheet(export_button_style)
+        self.btn_export_journal_word.clicked.connect(lambda: self.export_journal('word'))
+        buttons_grid.addWidget(self.btn_export_journal_word, 1, 1)
+
+        export_layout.addLayout(buttons_grid)
+        content_layout.addWidget(export_group)
+
+        # Секция статистики
+        stats_group = QGroupBox("📈 Общая статистика")
+        stats_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                font-size: 16px;
+                border: 2px solid #93a267;
+                border-radius: 10px;
+                padding-top: 15px;
+                background-color: white;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 15px;
+                padding: 0 10px 0 10px;
+                color: #485935;
+            }
+        """)
+
+        stats_layout = QVBoxLayout(stats_group)
+        stats_layout.setSpacing(15)
+
+        # Контейнер для статистики
+        self.stats_container = QWidget()
+        self.stats_container_layout = QVBoxLayout(self.stats_container)
+        self.stats_container_layout.setSpacing(10)
+
+        # Индикатор загрузки
+        self.stats_loading_label = QLabel("Загрузка статистики...")
+        self.stats_loading_label.setAlignment(Qt.AlignCenter)
+        self.stats_loading_label.setStyleSheet("""
+            QLabel {
+                color: #7F8C8D;
+                font-size: 16px;
+                padding: 20px;
+            }
+        """)
+        self.stats_container_layout.addWidget(self.stats_loading_label)
+
+        stats_layout.addWidget(self.stats_container)
+
+        self.btn_refresh_stats = QPushButton("🔄 Обновить статистику")
+        self.btn_refresh_stats.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 20px;
+                font-weight: bold;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        self.btn_refresh_stats.clicked.connect(self.load_statistics)
+        stats_layout.addWidget(self.btn_refresh_stats)
+
+        content_layout.addWidget(stats_group)
+
+        content_layout.addStretch()
+        scroll_area.setWidget(content_widget)
+        main_layout.addWidget(scroll_area, 1)
+        self.stacked_widget.addWidget(page)
+
+        # Загружаем статистику сразу при создании страницы
+        self.load_statistics()
+
+    def load_statistics(self):
+        """Загрузить и отобразить статистику"""
+        try:
+            for i in reversed(range(self.stats_container_layout.count())):
+                widget = self.stats_container_layout.itemAt(i).widget()
+                if widget:
+                    widget.deleteLater()
+
+            # Получаем данные
+            my_plants = list(self.service.PlantInstance.select().where(
+                self.service.PlantInstance.user == self.user_id
+            ))
+
+            journal_records = list(self.service.CareJournal.select().where(
+                self.service.CareJournal.user == self.user_id
+            ))
+
+            # Создаем виджеты статистики
+            stats_style = """
+                QLabel {
+                    font-size: 14px;
+                    color: #34495E;
+                    padding: 8px 10px;
+                    background-color: white;
+                    border-radius: 6px;
+                    border: 1px solid #DDD;
+                    margin: 2px;
+                }
+            """
+
+            # Общее количество растений
+            plants_count = len(my_plants)
+            plants_label = QLabel(f"🌿 <b>Общее количество растений:</b> {plants_count}")
+            plants_label.setStyleSheet(stats_style)
+            self.stats_container_layout.addWidget(plants_label)
+
+            # Растения по состоянию здоровья
+            if plants_count > 0:
+                health_stats = {}
+                for plant in my_plants:
+                    status = plant.health_status or 'unknown'
+                    health_stats[status] = health_stats.get(status, 0) + 1
+
+                # Словарь для отображения статусов
+                status_names = {
+                    'excellent': 'Отличное 🌟',
+                    'good': 'Хорошее ✅',
+                    'fair': 'Среднее ⚠️',
+                    'poor': 'Плохое ❗',
+                    'critical': 'Критическое 💀',
+                    'unknown': 'Не указано'
+                }
+
+                health_label = QLabel("💚 <b>Состояние здоровья растений:</b>")
+                health_label.setStyleSheet(stats_style)
+                self.stats_container_layout.addWidget(health_label)
+
+                for status, count in health_stats.items():
+                    display_name = status_names.get(status, status)
+                    status_label = QLabel(f"   • {display_name}: {count} ({count/plants_count*100:.1f}%)")
+                    status_label.setStyleSheet(stats_style.replace("white", "#F8F9FA"))
+                    self.stats_container_layout.addWidget(status_label)
+
+            # Статистика журнала
+            journal_count = len(journal_records)
+            journal_label = QLabel(f"📓 <b>Записей в журнале ухода:</b> {journal_count}")
+            journal_label.setStyleSheet(stats_style)
+            self.stats_container_layout.addWidget(journal_label)
+
+            if journal_count > 0:
+                # Типы ухода
+                care_types = {}
+                for record in journal_records:
+                    care_type = record.care_type or 'Другое'
+                    care_types[care_type] = care_types.get(care_type, 0) + 1
+
+                care_label = QLabel("🛠️ <b>Типы ухода:</b>")
+                care_label.setStyleSheet(stats_style)
+                self.stats_container_layout.addWidget(care_label)
+
+                for care_type, count in sorted(care_types.items(), key=lambda x: x[1], reverse=True):
+                    percent = count/journal_count*100
+                    type_label = QLabel(f"   • {care_type}: {count} ({percent:.1f}%)")
+                    type_label.setStyleSheet(stats_style.replace("white", "#F8F9FA"))
+                    self.stats_container_layout.addWidget(type_label)
+
+                # Последняя запись
+                if journal_records:
+                    last_record = max(journal_records, key=lambda x: x.care_date if x.care_date else datetime.min)
+                    last_date = last_record.care_date.strftime('%d.%m.%Y') if last_record.care_date else 'Не указана'
+                    last_label = QLabel(f"📅 <b>Последняя запись:</b> {last_date} ({last_record.care_type})")
+                    last_label.setStyleSheet(stats_style)
+                    self.stats_container_layout.addWidget(last_label)
+
+            # Информация если данных нет
+            if plants_count == 0 and journal_count == 0:
+                empty_label = QLabel("📭 У вас пока нет данных для статистики.\nДобавьте растения и записи в журнал ухода.")
+                empty_label.setStyleSheet("""
+                    QLabel {
+                        color: #7F8C8D;
+                        font-size: 16px;
+                        padding: 30px;
+                        text-align: center;
+                        font-style: italic;
+                    }
+                """)
+                empty_label.setAlignment(Qt.AlignCenter)
+                self.stats_container_layout.addWidget(empty_label)
+
+            self.stats_container_layout.addStretch()
+
+        except Exception as e:
+            error_label = QLabel(f"⚠️ Ошибка загрузки статистики: {str(e)}")
+            error_label.setStyleSheet("""
+                QLabel {
+                    color: #e74c3c;
+                    font-size: 14px;
+                    padding: 20px;
+                    text-align: center;
+                }
+            """)
+            self.stats_container_layout.addWidget(error_label)
+
+    def export_plants(self, format_type):
+        """Экспорт растений в указанном формате"""
+        try:
+            # Получаем растения пользователя
+            my_plants = list(self.service.PlantInstance.select().where(
+                self.service.PlantInstance.user == self.user_id
+            ))
+
+            if not my_plants:
+                self.show_warning_message("Нет данных", "У вас пока нет растений для экспорта.")
+                return
+
+            default_name = f"мои_растения_{datetime.now().strftime('%Y%m%d')}"
+
+            if format_type == 'pdf':
+                file_path, _ = QFileDialog.getSaveFileName(
+                    self, "Сохранить растения в PDF",
+                    f"{default_name}.pdf",
+                    "PDF файлы (*.pdf)"
+                )
+                if file_path:
+                    self._create_plants_pdf(my_plants, file_path)
+
+            elif format_type == 'word':
+                file_path, _ = QFileDialog.getSaveFileName(
+                    self, "Сохранить растения в Word",
+                    f"{default_name}.docx",
+                    "Word документы (*.docx)"
+                )
+                if file_path:
+                    self._create_plants_word(my_plants, file_path)
+
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось экспортировать растения: {str(e)}")
+
+    def export_journal(self, format_type):
+        """Экспорт журнала ухода в указанном формате"""
+        try:
+            # Получаем записи журнала
+            journal_records = list(self.service.CareJournal.select().where(
+                self.service.CareJournal.user == self.user_id
+            ).order_by(self.service.CareJournal.care_date.desc()))
+
+            if not journal_records:
+                self.show_warning_message("Нет данных", "У вас пока нет записей в журнале для экспорта.")
+                return
+
+            default_name = f"журнал_ухода_{datetime.now().strftime('%Y%m%d')}"
+
+            if format_type == 'pdf':
+                file_path, _ = QFileDialog.getSaveFileName(
+                    self, "Сохранить журнал в PDF",
+                    f"{default_name}.pdf",
+                    "PDF файлы (*.pdf)"
+                )
+                if file_path:
+                    self._create_journal_pdf(journal_records, file_path)
+
+            elif format_type == 'word':
+                file_path, _ = QFileDialog.getSaveFileName(
+                    self, "Сохранить журнал в Word",
+                    f"{default_name}.docx",
+                    "Word документы (*.docx)"
+                )
+                if file_path:
+                    self._create_journal_word(journal_records, file_path)
+
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось экспортировать журнал: {str(e)}")
+
+
+    def _create_plants_pdf(self, plants, file_path):
+        """Создать PDF с растениями с поддержкой русских шрифтов"""
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.units import cm
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet
+            from reportlab.lib import colors
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+            import os
+
+            font_found = False
+            font_paths = [
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+                'C:/Windows/Fonts/arial.ttf',
+                'C:/Windows/Fonts/tahoma.ttf',
+                'C:/Windows/Fonts/times.ttf',
+                './fonts/DejaVuSans.ttf',
+            ]
+
+            for font_path in font_paths:
+                if os.path.exists(font_path):
+                    try:
+                        pdfmetrics.registerFont(TTFont('RussianFont', font_path))
+                        pdfmetrics.registerFont(TTFont('RussianFont-Bold', font_path))
+                        font_found = True
+                        break
+                    except:
+                        continue
+
+            # Если шрифт не найден, используем Helvetica
+            if font_found:
+                russian_font = 'RussianFont'
+                russian_font_bold = 'RussianFont-Bold'
+            else:
+                russian_font = 'Helvetica'
+                russian_font_bold = 'Helvetica-Bold'
+
+            # Создаем документ
+            doc = SimpleDocTemplate(
+                file_path,
+                pagesize=A4,
+                topMargin=2*cm,
+                bottomMargin=2*cm,
+                leftMargin=1.5*cm,
+                rightMargin=1.5*cm,
+                encoding='utf-8'
+            )
+
+            story = []
+            styles = getSampleStyleSheet()
+
+            # Настраиваем стили
+            if font_found:
+                styles['Title'].fontName = russian_font_bold
+                styles['Normal'].fontName = russian_font
+
+            # Заголовок
+            title = Paragraph("Мои растения", styles['Title'])
+            story.append(title)
+
+            # Дата экспорта
+            from datetime import datetime
+            date_text = f"Дата экспорта: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+            date_para = Paragraph(date_text, styles['Normal'])
+            story.append(date_para)
+
+            story.append(Spacer(1, 1*cm))
+
+            # Подготавливаем данные для таблицы
+            table_data = []
+
+            # Заголовки таблицы
+            headers = ['Название', 'Возраст', 'Состояние', 'Комната', 'Дата добавления']
+            table_data.append(headers)
+
+            # Данные растений
+            for plant in plants:
+                # Возраст
+                age = f"{plant.age} мес." if plant.age else "Не указан"
+
+                # Статус на русском
+                status_dict = {
+                    'excellent': 'Отличное',
+                    'good': 'Хорошее',
+                    'fair': 'Среднее',
+                    'poor': 'Плохое',
+                    'critical': 'Критическое'
+                }
+                status = status_dict.get(plant.health_status, 'Не указано')
+
+                # Комната
+                room = plant.room if plant.room else "Не указано"
+
+                # Дата добавления
+                date = plant.acquisition_date.strftime('%d.%m.%Y') if plant.acquisition_date else "Не указана"
+
+                # Название растения
+                plant_name = plant.nickname if plant.nickname else "Без названия"
+
+                table_data.append([
+                    str(plant_name),
+                    str(age),
+                    str(status),
+                    str(room),
+                    str(date)
+                ])
+
+            # Создаем таблицу
+            col_widths = [5*cm, 3*cm, 4*cm, 4*cm, 4*cm]
+            table = Table(table_data, colWidths=col_widths, repeatRows=1)
+
+            # Настраиваем стиль таблицы
+            table_style = [
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#93a267')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.whitesmoke]),
+            ]
+
+            # Добавляем настройки шрифтов
+            if font_found:
+                table_style.insert(3, ('FONTNAME', (0, 0), (-1, 0), russian_font_bold))
+                table_style.insert(9, ('FONTNAME', (0, 1), (-1, -1), russian_font))
+                table_style.append(('ALIGN', (0, 1), (-1, -1), 'LEFT'))
+            else:
+                table_style.insert(3, ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'))
+                table_style.insert(9, ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'))
+                table_style.append(('ALIGN', (0, 1), (-1, -1), 'LEFT'))
+
+            table.setStyle(TableStyle(table_style))
+            story.append(table)
+
+            story.append(Spacer(1, 1*cm))
+
+            # Итог
+            total_text = f"Всего растений: {len(plants)}"
+            total_para = Paragraph(total_text, styles['Normal'])
+            story.append(total_para)
+
+            # Строим документ
+            doc.build(story)
+            self.show_info_message("Успех", f"Растения экспортированы в PDF\nФайл: {file_path}")
+
+        except ImportError:
+            self.show_warning_message("Ошибка",
+                "Для экспорта в PDF требуется библиотека reportlab.\n"
+                "Установите её: pip install reportlab")
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось создать PDF: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def _create_journal_pdf(self, records, file_path):
+        """Создать PDF с журналом ухода"""
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.units import cm
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet
+            from reportlab.lib import colors
+            from reportlab.pdfbase import pdfmetrics
+            from reportlab.pdfbase.ttfonts import TTFont
+            import os
+
+            font_found = False
+            font_paths = [
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+                'C:/Windows/Fonts/arial.ttf',
+                'C:/Windows/Fonts/tahoma.ttf',
+                'C:/Windows/Fonts/times.ttf',
+                './fonts/DejaVuSans.ttf',
+            ]
+
+            for font_path in font_paths:
+                if os.path.exists(font_path):
+                    try:
+                        pdfmetrics.registerFont(TTFont('RussianFont', font_path))
+                        pdfmetrics.registerFont(TTFont('RussianFont-Bold', font_path))
+                        font_found = True
+                        break
+                    except:
+                        continue
+
+            if font_found:
+                russian_font = 'RussianFont'
+                russian_font_bold = 'RussianFont-Bold'
+            else:
+                russian_font = 'Helvetica'
+                russian_font_bold = 'Helvetica-Bold'
+
+            # Размер страницы A4
+            page_width_cm = 21.0
+            left_margin_cm = 1.5
+            right_margin_cm = 1.5
+            available_width_cm = page_width_cm - left_margin_cm - right_margin_cm
+
+            # Создаем документ
+            doc = SimpleDocTemplate(
+                file_path,
+                pagesize=A4,
+                topMargin=2*cm,
+                bottomMargin=2*cm,
+                leftMargin=left_margin_cm*cm,
+                rightMargin=right_margin_cm*cm,
+                encoding='utf-8'
+            )
+
+            story = []
+            styles = getSampleStyleSheet()
+
+            if font_found:
+                styles['Title'].fontName = russian_font_bold
+                styles['Normal'].fontName = russian_font
+
+            # Заголовок
+            title = Paragraph("Журнал ухода за растениями", styles['Title'])
+            story.append(title)
+
+            # Дата экспорта
+            from datetime import datetime
+            date_text = f"Дата экспорта: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+            date_para = Paragraph(date_text, styles['Normal'])
+            story.append(date_para)
+
+            story.append(Spacer(1, 1*cm))
+
+            # Подготавливаем данные
+            table_data = []
+            headers = ['Дата', 'Растение', 'Тип ухода', 'Заметки']
+            table_data.append(headers)
+
+            for record in records:
+                # Имя растения
+                plant_name = "Неизвестное растение"
+                try:
+                    if record.instance and record.instance.nickname:
+                        plant_name = record.instance.nickname
+                    elif record.instance and record.instance.plant:
+                        plant_name = record.instance.plant.scientific_name
+                except:
+                    pass
+
+                # Дата
+                date_str = record.care_date.strftime('%d.%m.%Y') if record.care_date else "Не указана"
+
+                # Тип ухода
+                care_type = record.care_type or "Другое"
+
+                # Заметки
+                notes = record.description or "Без заметок"
+                if len(notes) > 40:
+                    notes = notes[:37] + "..."
+
+                table_data.append([date_str, plant_name, care_type, notes])
+
+            # Рассчитываем ширину колонок (сумма должна быть <= available_width_cm)
+            col_widths = [3*cm, 5*cm, 4*cm, 6*cm]
+
+            # Если сумма больше доступной ширины, уменьшаем пропорционально
+            total_table_width = sum(w/cm for w in col_widths)
+            if total_table_width > available_width_cm:
+                scale_factor = available_width_cm / total_table_width
+                col_widths = [w * scale_factor for w in col_widths]
+
+            table = Table(table_data, colWidths=col_widths, repeatRows=1)
+
+            # Стиль таблицы
+            table_style = [
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#93a267')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+            ]
+
+            # Шрифты
+            if font_found:
+                table_style.append(('FONTNAME', (0, 0), (-1, 0), russian_font_bold))
+                table_style.append(('FONTNAME', (0, 1), (-1, -1), russian_font))
+            else:
+                table_style.append(('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'))
+                table_style.append(('FONTNAME', (0, 1), (-1, -1), 'Helvetica'))
+
+            # Выравнивание
+            table_style.append(('ALIGN', (0, 1), (0, -1), 'CENTER'))  # Дата по центру
+            table_style.append(('ALIGN', (1, 1), (2, -1), 'LEFT'))    # Растение и тип ухода слева
+            table_style.append(('ALIGN', (3, 1), (3, -1), 'LEFT'))    # Заметки слева
+
+            # Перенос длинного текста
+            table_style.append(('WORDWRAP', (3, 1), (3, -1), True))  # Включаем перенос слов в колонке заметок
+
+            table.setStyle(TableStyle(table_style))
+            story.append(table)
+
+            story.append(Spacer(1, 1*cm))
+
+            # Итог
+            total_text = f"Всего записей: {len(records)}"
+            total_para = Paragraph(total_text, styles['Normal'])
+            story.append(total_para)
+
+            # Автоматически подгоняем размер таблицы под страницу
+            doc.build(story, onFirstPage=lambda canvas, doc: None,
+                      onLaterPages=lambda canvas, doc: None)
+
+            self.show_info_message("Успех", f"Журнал экспортирован в PDF\nФайл: {file_path}")
+
+        except ImportError:
+            self.show_warning_message("Ошибка",
+                "Для экспорта в PDF требуется библиотека reportlab.\n"
+                "Установите её: pip install reportlab")
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось создать PDF: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def _create_plants_word(self, plants, file_path):
+        """Создать Word документ с растениями"""
+        try:
+            import docx
+            from docx import Document
+            from docx.shared import Inches, Pt, RGBColor
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            from docx.oxml.ns import qn
+            from docx.oxml import OxmlElement
+
+            doc = Document()
+
+            # Настройка стилей для поддержки русского языка
+            style = doc.styles['Normal']
+            style.font.name = 'Times New Roman'
+            style.font.size = Pt(11)
+
+            # Заголовок
+            title = doc.add_heading('Мои растения', 0)
+            title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            # Дата экспорта
+            from datetime import datetime
+            date_para = doc.add_paragraph(f"Дата экспорта: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
+            date_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            doc.add_paragraph()  # Пустая строка
+
+            # Таблица
+            table = doc.add_table(rows=1, cols=5)
+            table.style = 'Table Grid'
+
+            # Заголовки таблицы
+            headers = ['Название', 'Возраст', 'Состояние', 'Комната', 'Дата добавления']
+            hdr_cells = table.rows[0].cells
+
+            for i, header in enumerate(headers):
+                hdr_cells[i].text = header
+                paragraph = hdr_cells[i].paragraphs[0]
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run = paragraph.runs[0]
+                run.bold = True
+                run.font.color.rgb = RGBColor(255, 255, 255)  # Белый текст
+
+                # Заливка заголовков
+                tcPr = hdr_cells[i]._tc.get_or_add_tcPr()
+                shading = OxmlElement('w:shd')
+                shading.set(qn('w:fill'), '93A267')  # HEX цвета
+                tcPr.append(shading)
+
+            # Данные растений
+            for plant in plants:
+                row_cells = table.add_row().cells
+
+                age = f"{plant.age} мес." if plant.age else "Не указан"
+                status_dict = {
+                    'excellent': 'Отличное',
+                    'good': 'Хорошее',
+                    'fair': 'Среднее',
+                    'poor': 'Плохое',
+                    'critical': 'Критическое'
+                }
+                status = status_dict.get(plant.health_status, 'Не указано')
+                room = plant.room if plant.room else "Не указано"
+                date = plant.acquisition_date.strftime('%d.%m.%Y') if plant.acquisition_date else "Не указана"
+                plant_name = plant.nickname if plant.nickname else "Без названия"
+
+                data = [plant_name, age, status, room, date]
+
+                for i, value in enumerate(data):
+                    row_cells[i].text = str(value)
+                    row_cells[i].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            # Итог
+            doc.add_paragraph()
+            total_para = doc.add_paragraph(f"Всего растений: {len(plants)}")
+            total_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            doc.save(file_path)
+            self.show_info_message("Успех", f"Растения экспортированы в Word\nФайл: {file_path}")
+
+        except ImportError:
+            self.show_warning_message("Ошибка",
+                "Для экспорта в Word требуется библиотека python-docx.\n"
+                "Установите её: pip install python-docx")
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось создать Word документ: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def _create_journal_word(self, records, file_path):
+        """Создать Word документ с журналом ухода"""
+        try:
+            import docx
+            from docx import Document
+            from docx.shared import Inches, Pt, RGBColor
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+            doc = Document()
+
+            # Настройка стилей
+            style = doc.styles['Normal']
+            style.font.name = 'Times New Roman'
+            style.font.size = Pt(11)
+
+            # Заголовок
+            title = doc.add_heading('Журнал ухода за растениями', 0)
+            title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            # Дата экспорта
+            from datetime import datetime
+            date_para = doc.add_paragraph(f"Дата экспорта: {datetime.now().strftime('%d.%m.%Y %H:%M')}")
+            date_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            doc.add_paragraph()
+
+            # Таблица
+            table = doc.add_table(rows=1, cols=4)
+            table.style = 'Table Grid'
+
+            # Заголовки таблицы
+            headers = ['Дата', 'Растение', 'Тип ухода', 'Заметки']
+            hdr_cells = table.rows[0].cells
+
+            for i, header in enumerate(headers):
+                hdr_cells[i].text = header
+                paragraph = hdr_cells[i].paragraphs[0]
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run = paragraph.runs[0]
+                run.bold = True
+
+            # Данные записей
+            for record in records:
+                row_cells = table.add_row().cells
+
+                # Имя растения
+                plant_name = "Неизвестное растение"
+                try:
+                    if record.instance and record.instance.nickname:
+                        plant_name = record.instance.nickname
+                    elif record.instance and record.instance.plant:
+                        plant_name = record.instance.plant.scientific_name
+                except:
+                    pass
+
+                date_str = record.care_date.strftime('%d.%m.%Y') if record.care_date else "Не указана"
+                care_type = record.care_type or "Другое"
+                notes = record.description or "Без заметок"
+
+                data = [date_str, plant_name, care_type, notes]
+
+                for i, value in enumerate(data):
+                    row_cells[i].text = str(value)
+                    row_cells[i].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            # Итог
+            doc.add_paragraph()
+            total_para = doc.add_paragraph(f"Всего записей: {len(records)}")
+            total_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+            doc.save(file_path)
+            self.show_info_message("Успех", f"Журнал экспортирован в Word\nФайл: {file_path}")
+
+        except ImportError:
+            self.show_warning_message("Ошибка",
+                "Для экспорта в Word требуется библиотека python-docx.\n"
+                "Установите её: pip install python-docx")
+        except Exception as e:
+            self.show_error_message("Ошибка", f"Не удалось создать Word документ: {str(e)}")
+
