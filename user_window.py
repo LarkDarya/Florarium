@@ -569,3 +569,1354 @@ class UserWindow(QWidget):
 
         self.stacked_widget.setCurrentIndex(page_index)
 
+
+
+
+    # СОЗДАНИЕ СТРАНИЦ
+
+    def create_catalog_page(self):
+        """Создать страницу справочника растений в виде галереи"""
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setSpacing(20)
+
+        # Панель поиска
+        search_container = QFrame()
+        search_container.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 12px;
+                padding: 15px;
+                border: 2px solid #E8F5E9;
+            }
+        """)
+
+        search_layout = QHBoxLayout(search_container)
+        search_layout.setContentsMargins(10, 10, 10, 10)
+
+        # Заголовок поиска
+        search_header = QLabel("🔍 Поиск растения")
+        search_header.setStyleSheet("""
+            QLabel {
+                font-weight: bold;
+                font-size: 16px;
+                color: #2C3E50;
+                padding-right: 15px;
+            }
+        """)
+        search_layout.addWidget(search_header)
+
+        # Поле поиска
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Введите название растения...")
+        self.search_input.setMinimumHeight(40)
+        self.search_input.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 8px;
+                font-size: 14px;
+                background-color: white;
+                selection-background-color: #93a267;
+            }
+            QLineEdit:focus {
+                border: 2px solid #1ABC9C;
+            }
+            QLineEdit::placeholder {
+                color: #95A5A6;
+                font-style: italic;
+            }
+        """)
+        search_layout.addWidget(self.search_input, 3)  # 3 = коэффициент растяжения
+
+        # Кнопки поиска
+        button_style = """
+            QPushButton {
+                background-color: #93a267;
+                color: white;
+                border: none;
+                padding: 0 20px;
+                border-radius: 8px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 100px;
+                height: 40px;
+            }
+            QPushButton:hover {
+                background-color: #7a8a53;
+            }
+            QPushButton:pressed {
+                background-color: #6a7949;
+            }
+        """
+
+        self.btn_search = QPushButton("🔍 Найти")
+        self.btn_search.setStyleSheet(button_style)
+
+        self.btn_clear = QPushButton("🗑️ Сбросить")
+        self.btn_clear.setStyleSheet(button_style.replace("#93a267", "#95A5A6")
+                                           .replace("#7a8a53", "#7F8C8D")
+                                           .replace("#6a7949", "#6C7A89"))
+
+        search_layout.addWidget(self.btn_search)
+        search_layout.addWidget(self.btn_clear)
+
+        layout.addWidget(search_container)
+
+        # Создаем scroll area для прокрутки
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QScrollArea.NoFrame)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #F0F0F0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
+        # Контейнер для карточек
+        self.gallery_container = QWidget()
+        self.gallery_layout = QGridLayout(self.gallery_container)
+        self.gallery_layout.setSpacing(25)
+        self.gallery_layout.setContentsMargins(10, 10, 10, 10)
+        self.gallery_layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        scroll_area.setWidget(self.gallery_container)
+        layout.addWidget(scroll_area, 1)  # 1 = растягивается
+
+        # Подключение сигналов
+        self.btn_search.clicked.connect(self.search_plants)
+        self.btn_clear.clicked.connect(self.clear_search)
+
+        self.stacked_widget.addWidget(page)
+
+    def display_plants(self, plants):
+        """Отображение растений в виде карточек-галереи"""
+        for i in reversed(range(self.gallery_layout.count())):
+            widget = self.gallery_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        if not plants:
+            # Сообщение "нет растений"
+            empty_label = QLabel("Растения не найдены")
+            empty_label.setStyleSheet("""
+                QLabel {
+                    color: #7F8C8D;
+                    font-size: 18px;
+                    font-weight: bold;
+                    padding: 50px;
+                }
+            """)
+            empty_label.setAlignment(Qt.AlignCenter)
+            self.gallery_layout.addWidget(empty_label, 0, 0, 1, 3, Qt.AlignCenter)
+            return
+
+        # Создаем карточки растений
+        row, col = 0, 0
+        max_columns = 3  # Можно уменьшить до 2 или 1 если нужно больше места
+
+        for plant in plants:
+            # Создаем карточку
+            card = self.create_plant_card(plant)
+
+            # Добавляем в сетку
+            self.gallery_layout.addWidget(card, row, col, Qt.AlignTop)
+
+            # Переходим к следующей ячейке
+            col += 1
+            if col >= max_columns:
+                col = 0
+                row += 1
+
+        self.gallery_layout.setRowStretch(row + 1, 1)
+
+    def create_plant_card(self, plant):
+        """Создание простых карточек растений"""
+        card = QFrame()
+        card.setFixedSize(240, 320)
+        card.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: 1px solid #E0E0E0;
+                border-radius: 12px;
+                padding: 0px;
+            }
+        """)
+
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(0, 0, 0, 0)
+        card_layout.setSpacing(0)
+
+        # Верхняя часть - фото
+        photo_container = QWidget()
+        photo_container.setFixedHeight(180)
+        photo_container.setStyleSheet("""
+            QWidget {
+                background-color: #F8F9FA;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+            }
+        """)
+
+        photo_layout = QVBoxLayout(photo_container)
+        photo_layout.setContentsMargins(0, 0, 0, 0)
+        photo_layout.setAlignment(Qt.AlignCenter)
+
+        # Создаем QLabel для фото
+        photo_label = QLabel()
+        photo_label.setFixedSize(160, 160)
+        photo_label.setAlignment(Qt.AlignCenter)
+
+        photo_loaded = False
+
+        try:
+            plant_obj = self.service.Plant.get_by_id(plant['id'])
+
+            if plant_obj.main_photo:
+                photo = plant_obj.main_photo
+                photo_path = photo.photo_url
+
+                if photo_path:
+                    if not os.path.isabs(photo_path):
+                        base_dir = os.path.dirname(os.path.abspath(__file__))
+                        photo_path = os.path.join(base_dir, photo_path)
+
+                    if os.path.exists(photo_path):
+                        pixmap = QPixmap(photo_path)
+                        if not pixmap.isNull():
+                            pixmap = pixmap.scaled(160, 160,
+                                                  Qt.KeepAspectRatio,
+                                                  Qt.SmoothTransformation)
+                            photo_label.setPixmap(pixmap)
+                            photo_loaded = True
+        except Exception as e:
+            print(f"Ошибка загрузки фото для растения {plant['id']}: {e}")
+
+        if not photo_loaded:
+            photo_label.setText("🌿\nНет фото")
+            photo_label.setStyleSheet("""
+                QLabel {
+                    color: #7F8C8D;
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+            """)
+
+        photo_layout.addWidget(photo_label)
+        card_layout.addWidget(photo_container)
+
+        # Средняя часть - название растения
+        name_container = QWidget()  # Меняем QFrame на QWidget!
+        name_container.setFixedHeight(80)
+        name_container.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                padding: 10px;
+            }
+        """)
+
+        name_layout = QVBoxLayout(name_container)
+        name_layout.setContentsMargins(10, 5, 10, 5)
+
+        plant_name = plant.get('scientific_name', 'Без названия')
+
+        name_label = QLabel(plant_name)
+        name_label.setStyleSheet("""
+            QLabel {
+                color: #2C3E50;
+                font-weight: bold;
+                font-size: 16px;
+                max-width: 220px;
+                padding: 2px;
+            }
+        """)
+        name_label.setWordWrap(True)
+        name_label.setAlignment(Qt.AlignCenter)
+        name_label.setMinimumHeight(40)
+
+        name_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        name_layout.addWidget(name_label)
+        card_layout.addWidget(name_container)
+
+        button_container = QWidget()
+        button_container.setFixedHeight(60)
+        button_container.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                padding: 10px;
+            }
+        """)
+
+        button_layout = QVBoxLayout(button_container)
+        button_layout.setContentsMargins(20, 5, 20, 5)
+
+        details_btn = QPushButton("🔍 Подробнее")
+        details_btn.setFixedHeight(35)
+        details_btn.setCursor(Qt.PointingHandCursor)
+        details_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #93a267;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #7a8a53;
+            }
+            QPushButton:pressed {
+                background-color: #6a7949;
+            }
+        """)
+        details_btn.clicked.connect(lambda checked, p=plant: self.show_plant_details_window(p))
+
+        button_layout.addWidget(details_btn)
+        card_layout.addWidget(button_container)
+
+        return card
+
+    def show_plant_details_window(self, plant_data):
+        """Открыть окно с детальной информацией о растении"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"🌿 {plant_data['scientific_name']}")
+        dialog.setFixedSize(700, 500)
+
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #F5F5F5;
+            }
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #E0E0E0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
+        main_layout = QVBoxLayout(dialog)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(12)
+
+        try:
+            # Получаем полную информацию о растении
+            plant = self.service.Plant.get_by_id(plant_data['id'])
+
+            # Заголовок
+            title_label = QLabel(plant.scientific_name)
+            title_label.setStyleSheet("""
+                QLabel {
+                    font-size: 22px;
+                    font-weight: bold;
+                    color: #2C3E50;
+                    padding-bottom: 8px;
+                    border-bottom: 2px solid #93a267;
+                    margin-bottom: 10px;
+                }
+            """)
+            main_layout.addWidget(title_label)
+
+            # Scroll area для содержимого с нормальной прокруткой
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setFrameStyle(QScrollArea.NoFrame)
+            scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+            content_widget = QWidget()
+            content_layout = QVBoxLayout(content_widget)
+            content_layout.setContentsMargins(0, 0, 10, 0)
+            content_layout.setSpacing(10)
+
+            # Фотогалерея растения
+            try:
+                photos = list(self.service.PlantPhoto.select().where(
+                    self.service.PlantPhoto.plant == plant
+                ))
+
+                if photos:
+                    photos_label = QLabel("📷 Фотографии растения:")
+                    photos_label.setStyleSheet("""
+                        font-weight: bold;
+                        color: #485935;
+                        font-size: 15px;
+                        margin-bottom: 5px;
+                    """)
+                    content_layout.addWidget(photos_label)
+
+                    photos_scroll = QScrollArea()
+                    photos_scroll.setFixedHeight(130)
+                    photos_scroll.setWidgetResizable(True)
+                    photos_scroll.setFrameStyle(QScrollArea.NoFrame)
+                    photos_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+                    photos_widget = QWidget()
+                    photos_hbox = QHBoxLayout(photos_widget)
+                    photos_hbox.setSpacing(8)
+
+                    photos_scroll.setWidget(photos_widget)
+                    content_layout.addWidget(photos_scroll)
+            except Exception as e:
+                print(f"Ошибка загрузки фото: {e}")
+
+            # Стиль для всех информационных блоков
+            section_label_style = """
+                font-weight: bold;
+                color: #485935;
+                font-size: 15px;
+                margin-top: 8px;
+                margin-bottom: 3px;
+            """
+
+            section_content_style = """
+                font-size: 13px;
+                color: #34495E;
+                padding: 10px;
+                background-color: white;
+                border-radius: 6px;
+                border: 1px solid #DDD;
+                line-height: 1.4;
+            """
+
+            # Описание
+            if plant.description:
+                desc_label = QLabel("📝 Описание:")
+                desc_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(desc_label)
+
+                desc_text = QLabel(plant.description)
+                desc_text.setWordWrap(True)
+                desc_text.setStyleSheet(section_content_style)
+                content_layout.addWidget(desc_text)
+
+            # Информация об уходе
+            if hasattr(plant, 'care_guide') and plant.care_guide:
+                care_label = QLabel("💧 Уход за растением:")
+                care_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(care_label)
+
+                care = plant.care_guide
+                care_info = QFrame()
+                care_info.setStyleSheet(section_content_style)
+                care_layout = QVBoxLayout(care_info)
+                care_layout.setSpacing(4)
+                care_layout.setContentsMargins(0, 5, 0, 5)
+
+                if care.watering:
+                    care_layout.addWidget(QLabel(f"💦 <b>Полив:</b> {care.watering}"))
+                if care.light:
+                    care_layout.addWidget(QLabel(f"☀️ <b>Свет:</b> {care.light} люминов"))
+                if care.temperature_min and care.temperature_max:
+                    care_layout.addWidget(QLabel(f"🌡️ <b>Температура мин:</b> {care.temperature_min}°C"))
+                    care_layout.addWidget(QLabel(f"🌡️ <b>Температура макс:</b> {care.temperature_max}°C"))
+                if care.soil:
+                    care_layout.addWidget(QLabel(f"🌱 <b>Почва:</b> {care.soil}"))
+                if care.fertilizers:
+                    care_layout.addWidget(QLabel(f"🧪 <b>Удобрения:</b> {care.fertilizers}"))
+                if care.humidity:
+                    care_layout.addWidget(QLabel(f"💧 <b>Влажность:</b> {care.humidity}%"))
+
+                # Добавляем рамку ухода в основной контент
+                content_layout.addWidget(care_info)
+
+            # Семейства
+            try:
+                families = list(self.service.PlantFamilyRelation.select().where(
+                    self.service.PlantFamilyRelation.plant == plant
+                ))
+                if families:
+                    families_label = QLabel("🌳 Семейства:")
+                    families_label.setStyleSheet(section_label_style)
+                    content_layout.addWidget(families_label)
+
+                    family_list = []
+                    for fam in families:
+                        if hasattr(fam, 'family') and fam.family:
+                            family_list.append(fam.family.name)
+
+                    if family_list:
+                        families_text = QLabel(", ".join(family_list))
+                        families_text.setWordWrap(True)
+                        families_text.setStyleSheet(section_content_style)
+                        content_layout.addWidget(families_text)
+            except Exception as e:
+                print(f"Ошибка загрузки семейств: {e}")
+
+            # Местоположение
+            if hasattr(plant, 'main_location') and plant.main_location:
+                location_label = QLabel("📍 Местоположение:")
+                location_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(location_label)
+
+                location_info = QLabel(f"<b>{plant.main_location.location_name}</b>")
+                if plant.main_location.description:
+                    location_info.setText(f"<b>{plant.main_location.location_name}</b><br>{plant.main_location.description}")
+                location_info.setWordWrap(True)
+                location_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(location_info)
+
+            # Вредители
+            try:
+                pests = list(self.service.PlantPest.select().where(
+                    self.service.PlantPest.plant == plant
+                ))
+                if pests:
+                    pests_label = QLabel("🐛 Вредители:")
+                    pests_label.setStyleSheet(section_label_style)
+                    content_layout.addWidget(pests_label)
+
+                    pest_list = []
+                    for pest_relation in pests:
+                        if hasattr(pest_relation, 'pest') and pest_relation.pest:
+                            pest_list.append(pest_relation.pest.name)
+
+                    if pest_list:
+                        pests_text = QLabel(", ".join(pest_list))
+                        pests_text.setWordWrap(True)
+                        pests_text.setStyleSheet(section_content_style)
+                        content_layout.addWidget(pests_text)
+            except Exception as e:
+                print(f"Ошибка загрузки вредителей: {e}")
+
+            # Болезни
+            try:
+                diseases = list(self.service.PlantDisease.select().where(
+                    self.service.PlantDisease.plant == plant
+                ))
+                if diseases:
+                    diseases_label = QLabel("🤒 Болезни:")
+                    diseases_label.setStyleSheet(section_label_style)
+                    content_layout.addWidget(diseases_label)
+
+                    disease_list = []
+                    for disease_relation in diseases:
+                        if hasattr(disease_relation, 'disease') and disease_relation.disease:
+                            disease_list.append(disease_relation.disease.name)
+
+                    if disease_list:
+                        diseases_text = QLabel(", ".join(disease_list))
+                        diseases_text.setWordWrap(True)
+                        diseases_text.setStyleSheet(section_content_style)
+                        content_layout.addWidget(diseases_text)
+            except Exception as e:
+                print(f"Ошибка загрузки болезней: {e}")
+
+            # Пустое пространство внизу
+            content_layout.addStretch()
+
+            scroll_area.setWidget(content_widget)
+            main_layout.addWidget(scroll_area)
+
+            # Кнопка закрытия
+            btn_close = QPushButton("Закрыть")
+            btn_close.setFixedHeight(40)
+            btn_close.setStyleSheet("""
+                QPushButton {
+                    background-color: #93a267;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    min-width: 100px;
+                }
+                QPushButton:hover {
+                    background-color: #71804e;
+                }
+                QPushButton:pressed {
+                    background-color: #5a663c;
+                }
+            """)
+            btn_close.clicked.connect(dialog.accept)
+            main_layout.addWidget(btn_close)
+
+        except Exception as e:
+            error_label = QLabel(f"Ошибка загрузки данных растения: {str(e)}")
+            error_label.setStyleSheet("color: #E74C3C; font-weight: bold; padding: 10px;")
+            main_layout.addWidget(error_label)
+
+        # Центрируем окно
+        dialog.move(
+            self.x() + (self.width() - dialog.width()) // 2,
+            self.y() + (self.height() - dialog.height()) // 2
+        )
+
+        dialog.exec()
+
+    def search_plants(self):
+        """Поиск растений"""
+        search_text = self.search_input.text().strip()
+        if not search_text:
+            self.load_plants()
+            return
+
+        try:
+            plants = list(self.service.Plant.select().where(
+                self.service.Plant.scientific_name.contains(search_text) |
+                self.service.Plant.description.contains(search_text)
+            ).dicts())
+            self.display_plants(plants)
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка поиска: {str(e)}")
+
+    def clear_search(self):
+        """Очистка поиска"""
+        self.search_input.clear()
+        self.load_plants()
+
+    def create_my_plants_page(self):
+        """Создать страницу 'Мои растения' в виде галереи"""
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setSpacing(20)
+
+        # Панель управления
+        control_container = QFrame()
+        control_container.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 12px;
+                padding: 15px;
+                border: 2px solid #E8F5E9;
+            }
+        """)
+
+        control_layout = QHBoxLayout(control_container)
+        control_layout.setContentsMargins(10, 10, 10, 10)
+
+        # Заголовок
+        header_label = QLabel("🌿 Мои растения")
+        header_label.setStyleSheet("""
+            QLabel {
+                font-weight: bold;
+                font-size: 18px;
+                color: #2C3E50;
+                padding-right: 20px;
+            }
+        """)
+        control_layout.addWidget(header_label)
+
+        # Стиль кнопок
+        button_style = """
+            QPushButton {
+                background-color: #93a267;
+                color: white;
+                border: none;
+                padding: 0 20px;
+                border-radius: 8px;
+                font-weight: bold;
+                font-size: 14px;
+                min-width: 100px;
+                height: 40px;
+            }
+            QPushButton:hover {
+                background-color: #7a8a53;
+            }
+            QPushButton:pressed {
+                background-color: #6a7949;
+            }
+        """
+
+        delete_button_style = button_style.replace("#93a267", "#e74c3c") \
+                                         .replace("#7a8a53", "#c0392b") \
+                                         .replace("#6a7949", "#a93226")
+
+        # Кнопки управления
+        self.btn_add_my_plant = QPushButton("➕ Добавить")
+        self.btn_add_my_plant.setStyleSheet(button_style)
+
+        self.btn_edit_my_plant = QPushButton("✏️ Редактировать")
+        self.btn_edit_my_plant.setStyleSheet(button_style)
+
+        self.btn_delete_my_plant = QPushButton("🗑️ Удалить")
+        self.btn_delete_my_plant.setStyleSheet(delete_button_style)
+
+        self.btn_refresh_my_plants = QPushButton("🔄 Обновить")
+        self.btn_refresh_my_plants.setStyleSheet(button_style)
+
+        control_layout.addWidget(self.btn_add_my_plant)
+        control_layout.addWidget(self.btn_edit_my_plant)
+        control_layout.addWidget(self.btn_delete_my_plant)
+        control_layout.addWidget(self.btn_refresh_my_plants)
+        control_layout.addStretch()
+
+        layout.addWidget(control_container)
+
+        # Панель поиска
+        search_container = QFrame()
+        search_container.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 12px;
+                padding: 15px;
+                border: 2px solid #E8F5E9;
+            }
+        """)
+
+        search_layout = QHBoxLayout(search_container)
+        search_layout.setContentsMargins(10, 10, 10, 10)
+
+        # Заголовок поиска
+        search_header = QLabel("🔍 Поиск в моих растениях")
+        search_header.setStyleSheet("""
+            QLabel {
+                font-weight: bold;
+                font-size: 16px;
+                color: #2C3E50;
+                padding-right: 15px;
+            }
+        """)
+        search_layout.addWidget(search_header)
+
+        # Поле поиска
+        self.search_my_plants_input = QLineEdit()
+        self.search_my_plants_input.setPlaceholderText("Введите название растения...")
+        self.search_my_plants_input.setMinimumHeight(40)
+        self.search_my_plants_input.setStyleSheet("""
+            QLineEdit {
+                padding: 8px 15px;
+                border: 2px solid #93a267;
+                border-radius: 8px;
+                font-size: 14px;
+                background-color: white;
+                selection-background-color: #93a267;
+            }
+            QLineEdit:focus {
+                border: 2px solid #1ABC9C;
+            }
+            QLineEdit::placeholder {
+                color: #95A5A6;
+                font-style: italic;
+            }
+        """)
+        search_layout.addWidget(self.search_my_plants_input, 3)
+
+        # Кнопки поиска
+        self.btn_search_my_plants = QPushButton("🔍 Найти")
+        self.btn_search_my_plants.setStyleSheet(button_style)
+
+        self.btn_clear_my_plants = QPushButton("🗑️ Сбросить")
+        self.btn_clear_my_plants.setStyleSheet(button_style.replace("#93a267", "#95A5A6")
+                                                           .replace("#7a8a53", "#7F8C8D")
+                                                           .replace("#6a7949", "#6C7A89"))
+
+        search_layout.addWidget(self.btn_search_my_plants)
+        search_layout.addWidget(self.btn_clear_my_plants)
+
+        layout.addWidget(search_container)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QScrollArea.NoFrame)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #F0F0F0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
+        # Контейнер для карточек
+        self.my_plants_container = QWidget()
+        self.my_plants_layout = QGridLayout(self.my_plants_container)
+        self.my_plants_layout.setSpacing(25)
+        self.my_plants_layout.setContentsMargins(10, 10, 10, 10)
+        self.my_plants_layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        scroll_area.setWidget(self.my_plants_container)
+        layout.addWidget(scroll_area, 1)
+
+        # Подключение сигналов
+        self.btn_add_my_plant.clicked.connect(self.add_my_plant)
+        def on_container_click(event):
+            self.clear_selection()
+
+        self.my_plants_container.mousePressEvent = on_container_click
+
+        self.btn_edit_my_plant.clicked.connect(self.edit_my_plant)
+        self.btn_delete_my_plant.clicked.connect(self.delete_my_plant)
+        self.btn_refresh_my_plants.clicked.connect(self.load_my_plants)
+        self.btn_search_my_plants.clicked.connect(self.search_my_plants)
+        self.btn_clear_my_plants.clicked.connect(self.clear_my_plants_search)
+
+        self.stacked_widget.addWidget(page)
+
+    def clear_selection(self):
+        """Сбросить выделение карточки"""
+        if hasattr(self, 'selected_plant_card'):
+            delattr(self, 'selected_plant_card')
+        if hasattr(self, 'selected_plant_data'):
+            delattr(self, 'selected_plant_data')
+        self.update_my_plants_cards_style()
+
+    def display_my_plants(self, plants):
+        """Отображение моих растений в виде карточек-галереи"""
+        for i in reversed(range(self.my_plants_layout.count())):
+            widget = self.my_plants_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        if not plants:
+            # Сообщение "нет растений"
+            empty_label = QLabel("У вас пока нет растений\nНажмите 'Добавить', чтобы добавить первое растение")
+            empty_label.setStyleSheet("""
+                QLabel {
+                    color: #7F8C8D;
+                    font-size: 16px;
+                    font-weight: bold;
+                    padding: 50px;
+                    text-align: center;
+                }
+            """)
+            empty_label.setAlignment(Qt.AlignCenter)
+            self.my_plants_layout.addWidget(empty_label, 0, 0, 1, 3, Qt.AlignCenter)
+            return
+
+        # Создаем карточки растений
+        row, col = 0, 0
+        max_columns = 3
+
+        for plant in plants:
+            # Создаем карточку
+            card = self.create_my_plant_card(plant)
+            self.my_plants_layout.addWidget(card, row, col, Qt.AlignTop)
+
+            # Переходим к следующей ячейке
+            col += 1
+            if col >= max_columns:
+                col = 0
+                row += 1
+
+        # Добавляем растягивающийся элемент для правильного выравнивания
+        self.my_plants_layout.setRowStretch(row + 1, 1)
+
+    def create_my_plant_card(self, plant):
+        """Создать карточку для моего растения"""
+        card = QFrame()
+        card.setFixedSize(240, 320)
+
+        # Храним ID растения в объекте карточки
+        card.plant_id = plant.get('id')
+        card.plant_data = plant
+
+        # Проверяем, выбрана ли эта карточка
+        is_selected = hasattr(self, 'selected_plant_card') and self.selected_plant_card == card.plant_id
+
+        # Стиль зависит от выбора
+        if is_selected:
+            card_style = """
+                QFrame {
+                    background-color: white;
+                    border: 3px solid #93a267;
+                    border-radius: 12px;
+                    padding: 0px;
+                }
+            """
+        else:
+            card_style = """
+                QFrame {
+                    background-color: white;
+                    border: 1px solid #E0E0E0;
+                    border-radius: 12px;
+                    padding: 0px;
+                }
+            """
+
+        card.setStyleSheet(card_style)
+
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(0, 0, 0, 0)
+        card_layout.setSpacing(0)
+
+        # Верхняя часть - фото
+        photo_container = QWidget()
+        photo_container.setFixedHeight(180)
+        photo_container.setStyleSheet("""
+            QWidget {
+                background-color: #F8F9FA;
+                border-top-left-radius: 10px;
+                border-top-right-radius: 10px;
+            }
+        """)
+
+        photo_layout = QVBoxLayout(photo_container)
+        photo_layout.setContentsMargins(0, 0, 0, 0)
+        photo_layout.setAlignment(Qt.AlignCenter)
+
+        # Создаем QLabel для фото
+        photo_label = QLabel()
+        photo_label.setFixedSize(160, 160)
+        photo_label.setAlignment(Qt.AlignCenter)
+
+        # Пытаемся загрузить фотографию растения
+        photo_loaded = False
+
+        try:
+            # Для моих растений используем PlantInstance
+            plant_id = plant.get('id')
+            if plant_id:
+                plant_obj = self.service.PlantInstance.get_by_id(plant_id)
+
+                # Пытаемся получить фото из InstancePhoto
+                try:
+                    instance_photos = list(self.service.InstancePhoto.select().where(
+                        self.service.InstancePhoto.instance == plant_obj,
+                        self.service.InstancePhoto.is_current == True
+                    ))
+
+                    if instance_photos:
+                        photo_path = instance_photos[0].photo_url
+
+                        if photo_path:
+                            if not os.path.isabs(photo_path):
+                                base_dir = os.path.dirname(os.path.abspath(__file__))
+                                photo_path = os.path.join(base_dir, photo_path)
+
+                            if os.path.exists(photo_path):
+                                pixmap = QPixmap(photo_path)
+                                if not pixmap.isNull():
+                                    pixmap = pixmap.scaled(160, 160,
+                                                          Qt.KeepAspectRatio,
+                                                          Qt.SmoothTransformation)
+                                    photo_label.setPixmap(pixmap)
+                                    photo_loaded = True
+                except Exception as photo_e:
+                    print(f"Ошибка загрузки фото для экземпляра растения {plant_id}: {photo_e}")
+
+        except Exception as e:
+            print(f"Ошибка загрузки растения пользователя {plant.get('id')}: {e}")
+
+        if not photo_loaded:
+            photo_label.setText("🌿\nНет фото")
+            photo_label.setStyleSheet("""
+                QLabel {
+                    color: #7F8C8D;
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+            """)
+
+        photo_layout.addWidget(photo_label)
+        card_layout.addWidget(photo_container)
+
+        # Средняя часть - название растения
+        name_container = QWidget()
+        name_container.setFixedHeight(80)
+        name_container.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                padding: 10px;
+            }
+        """)
+
+        name_layout = QVBoxLayout(name_container)
+        name_layout.setContentsMargins(10, 5, 10, 5)
+
+        plant_name = plant.get('nickname', 'Мое растение')
+        if not plant_name or plant_name == 'None':
+            plant_name = 'Мое растение'
+
+        name_label = QLabel(plant_name)
+        name_label.setStyleSheet("""
+            QLabel {
+                color: #2C3E50;
+                font-weight: bold;
+                font-size: 16px;
+                max-width: 220px;
+                padding: 2px;
+            }
+        """)
+        name_label.setWordWrap(True)
+        name_label.setAlignment(Qt.AlignCenter)
+        name_label.setMinimumHeight(40)
+        name_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        name_layout.addWidget(name_label)
+        card_layout.addWidget(name_container)
+
+        # Нижняя часть - кнопка
+        button_container = QWidget()
+        button_container.setFixedHeight(60)
+        button_container.setStyleSheet("""
+            QWidget {
+                background-color: white;
+                padding: 10px;
+            }
+        """)
+
+        button_layout = QVBoxLayout(button_container)
+        button_layout.setContentsMargins(20, 5, 20, 5)
+
+        details_btn = QPushButton("🔍 Подробнее")
+        details_btn.setFixedHeight(35)
+        details_btn.setCursor(Qt.PointingHandCursor)
+        details_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #93a267;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #7a8a53;
+            }
+            QPushButton:pressed {
+                background-color: #6a7949;
+            }
+        """)
+        details_btn.clicked.connect(lambda: self.show_my_plant_details_window(plant))
+
+        button_layout.addWidget(details_btn)
+        card_layout.addWidget(button_container)
+
+        # Добавляем обработчик клика
+        def on_card_clicked(event):
+            event.accept()
+
+            # Проверяем, не выбрана ли уже эта карточка
+            if hasattr(self, 'selected_plant_card') and self.selected_plant_card == card.plant_id:
+                self.clear_selection()
+            else:
+                # Сохраняем выбранное растение
+                self.selected_plant_card = card.plant_id
+                self.selected_plant_data = card.plant_data
+                self.update_my_plants_cards_style()
+
+        card.mousePressEvent = on_card_clicked
+        card.setCursor(Qt.PointingHandCursor)
+
+        return card
+
+    def show_my_plant_details_window(self, plant_data):
+        """Открыть окно с детальной информацией о растении пользователя"""
+        dialog = QDialog(self)
+
+        try:
+            plant = self.service.PlantInstance.get_by_id(plant_data['id'])
+
+            # Получаем имя для заголовка окна
+            plant_name = plant.nickname if plant.nickname and plant.nickname != 'None' else 'Мое растение'
+            dialog.setWindowTitle(f"🌿 {plant_name}")
+        except:
+            dialog.setWindowTitle("🌿 Мое растение")
+
+        dialog.setFixedSize(700, 500)
+
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #F5F5F5;
+            }
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background-color: #E0E0E0;
+                width: 10px;
+                border-radius: 5px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #93a267;
+                border-radius: 5px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #71804e;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+            }
+        """)
+
+        main_layout = QVBoxLayout(dialog)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(12)
+
+        try:
+            # Получаем полную информацию о растении
+            plant = self.service.PlantInstance.get_by_id(plant_data['id'])
+
+            # Заголовок - используем никнейм или "Мое растение"
+            display_name = plant.nickname if plant.nickname and plant.nickname != 'None' else 'Мое растение'
+            title_label = QLabel(display_name)
+            title_label.setStyleSheet("""
+                QLabel {
+                    font-size: 22px;
+                    font-weight: bold;
+                    color: #2C3E50;
+                    padding-bottom: 8px;
+                    border-bottom: 2px solid #93a267;
+                    margin-bottom: 10px;
+                }
+            """)
+            main_layout.addWidget(title_label)
+
+            # Scroll area для содержимого
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setFrameStyle(QScrollArea.NoFrame)
+            scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+            content_widget = QWidget()
+            content_layout = QVBoxLayout(content_widget)
+            content_layout.setContentsMargins(0, 0, 10, 0)
+            content_layout.setSpacing(10)
+
+            section_label_style = """
+                font-weight: bold;
+                color: #485935;
+                font-size: 15px;
+                margin-top: 8px;
+                margin-bottom: 3px;
+            """
+
+            section_content_style = """
+                font-size: 13px;
+                color: #34495E;
+                padding: 10px;
+                background-color: white;
+                border-radius: 6px;
+                border: 1px solid #DDD;
+                line-height: 1.4;
+            """
+
+            # Никнейм
+            if plant.nickname and plant.nickname != 'None':
+                nickname_label = QLabel("🏷️ Прозвище:")
+                nickname_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(nickname_label)
+
+                nickname_info = QLabel(plant.nickname)
+                nickname_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(nickname_info)
+
+            # Описание
+            if plant.description and plant.description != 'None':
+                desc_label = QLabel("📝 Описание:")
+                desc_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(desc_label)
+
+                desc_text = QLabel(plant.description)
+                desc_text.setWordWrap(True)
+                desc_text.setStyleSheet(section_content_style)
+                content_layout.addWidget(desc_text)
+
+            # Дата приобретения
+            if plant.acquisition_date:
+                date_label = QLabel("📅 Дата приобретения:")
+                date_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(date_label)
+
+                date_info = QLabel(str(plant.acquisition_date))
+                date_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(date_info)
+
+            # Возраст
+            if plant.age:
+                age_label = QLabel("🎂 Возраст:")
+                age_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(age_label)
+
+                age_info = QLabel(f"{plant.age} месяцев")
+                age_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(age_info)
+
+            # Состояние
+            if plant.health_status:
+                health_label = QLabel("💚 Состояние здоровья:")
+                health_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(health_label)
+
+                status_dict = {
+                    'excellent': 'Отличное 🌟',
+                    'good': 'Хорошее ✅',
+                    'fair': 'Среднее ⚠️',
+                    'poor': 'Плохое ❗',
+                    'critical': 'Критическое 💀'
+                }
+                status = status_dict.get(plant.health_status, plant.health_status)
+                health_info = QLabel(status)
+                health_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(health_info)
+
+            # Местоположение
+            if plant.room and plant.room != 'None':
+                location_label = QLabel("📍 Комната:")
+                location_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(location_label)
+
+                location_info = QLabel(plant.room)
+                location_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(location_info)
+
+            # Примечания к местоположению
+            if plant.location_notes and plant.location_notes != 'None':
+                notes_label = QLabel("📌 Примечания к местоположению:")
+                notes_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(notes_label)
+
+                notes_info = QLabel(plant.location_notes)
+                notes_info.setWordWrap(True)
+                notes_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(notes_info)
+
+            # График полива
+            if hasattr(plant, 'watering_schedule') and plant.watering_schedule and plant.watering_schedule != 'None':
+                water_label = QLabel("💧 График полива:")
+                water_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(water_label)
+
+                water_info = QLabel(plant.watering_schedule)
+                water_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(water_info)
+
+            # Индивидуальный уход
+            if hasattr(plant, 'custom_care_notes') and plant.custom_care_notes and plant.custom_care_notes != 'None':
+                care_label = QLabel("🌱 Индивидуальный уход:")
+                care_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(care_label)
+
+                care_info = QLabel(plant.custom_care_notes)
+                care_info.setWordWrap(True)
+                care_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(care_info)
+
+            # Дата создания
+            if hasattr(plant, 'created_at') and plant.created_at:
+                created_label = QLabel("📅 Дата добавления:")
+                created_label.setStyleSheet(section_label_style)
+                content_layout.addWidget(created_label)
+
+                created_info = QLabel(str(plant.created_at))
+                created_info.setStyleSheet(section_content_style)
+                content_layout.addWidget(created_info)
+
+            # Пустое пространство внизу
+            content_layout.addStretch()
+
+            scroll_area.setWidget(content_widget)
+            main_layout.addWidget(scroll_area)
+
+            # Кнопка закрытия
+            btn_close = QPushButton("Закрыть")
+            btn_close.setFixedHeight(40)
+            btn_close.setStyleSheet("""
+                QPushButton {
+                    background-color: #93a267;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    min-width: 100px;
+                }
+                QPushButton:hover {
+                    background-color: #71804e;
+                }
+                QPushButton:pressed {
+                    background-color: #5a663c;
+                }
+            """)
+            btn_close.clicked.connect(dialog.accept)
+            main_layout.addWidget(btn_close)
+
+        except Exception as e:
+            error_label = QLabel(f"Ошибка загрузки данных растения: {str(e)}")
+            error_label.setStyleSheet("color: #E74C3C; font-weight: bold; padding: 10px;")
+            main_layout.addWidget(error_label)
+
+        # Центрируем окно
+        dialog.move(
+            self.x() + (self.width() - dialog.width()) // 2,
+            self.y() + (self.height() - dialog.height()) // 2
+        )
+
+        dialog.exec()
+
+    def search_my_plants(self):
+        """Поиск в моих растениях"""
+        search_text = self.search_my_plants_input.text().strip()
+        if not search_text:
+            self.load_my_plants()
+            return
+
+        try:
+            my_plants = list(self.service.UserPlant.select().where(
+                self.service.UserPlant.name.contains(search_text) |
+                self.service.UserPlant.notes.contains(search_text)
+            ).dicts())
+            self.display_my_plants(my_plants)
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Ошибка поиска: {str(e)}")
+
+    def clear_my_plants_search(self):
+        """Очистка поиска в моих растениях"""
+        self.search_my_plants_input.clear()
+        self.load_my_plants()
+
+
