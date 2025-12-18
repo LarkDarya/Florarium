@@ -1,6 +1,7 @@
 {
     "files": [
         "database.py",
+        "models.py",
         "widget.py"
     ]
 }
