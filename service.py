@@ -1,4 +1,3 @@
-# service.py - класс FlorariumService
 from typing import Optional, List, Dict, Any
 from models import *
 from peewee import fn, JOIN

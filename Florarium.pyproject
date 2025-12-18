@@ -1,8 +1,11 @@
 {
     "files": [
         "database.py",
+        "login_window.py",
         "models.py",
+        "register_window.py",
         "service.py",
+        "start_window.py",
         "widget.py"
     ]
 }

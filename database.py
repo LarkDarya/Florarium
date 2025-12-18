@@ -1,4 +1,3 @@
-# database.py
 from peewee import PostgresqlDatabase
 from dotenv import load_dotenv
 import os

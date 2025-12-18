@@ -1,4 +1,3 @@
-# models.py
 from peewee import *
 import os
 from datetime import datetime
