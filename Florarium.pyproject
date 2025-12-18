@@ -1,5 +1,11 @@
 {
     "files": [
+        "admin/admin_controller.py",
+        "admin/admin_data_manager.py",
+        "admin/admin_dialogs.py",
+        "admin/admin_window.py",
+        "admin_controller.py",
+        "admin_window.py",
         "database.py",
         "login_window.py",
         "models.py",

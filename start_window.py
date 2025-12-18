@@ -436,20 +436,25 @@ class FlorariumWidget(QWidget):
     def open_user_window(self, user):
         """Открытие окна в зависимости от роли пользователя"""
         try:
-            # Показываем приветственное сообщение
             welcome_dialog = WelcomeDialog(self, user)
             welcome_dialog.exec()
-
-            # Закрываем текущее окно (окно входа)
             self.hide()
 
             if user.role == 'admin':
                 from admin_window import AdminWindow
                 self.admin_window = AdminWindow(user.id)
 
-                def custom_admin_close_event(event):
+                # Переопределяем closeEvent для окна администратора
+                def admin_close_event(event):
                     self.admin_window.closeEvent = lambda e: super(type(self.admin_window), self.admin_window).closeEvent(e)
                     event.accept()
+                    self.show_main_window()
+
+                # Сохраняем оригинальный closeEvent
+                original_close_event = self.admin_window.closeEvent
+
+                def custom_admin_close_event(event):
+                    original_close_event(event)
                     self.show_main_window()
 
                 self.admin_window.closeEvent = custom_admin_close_event
@@ -459,9 +464,11 @@ class FlorariumWidget(QWidget):
                 from user_window import UserWindow
                 self.user_window = UserWindow(user.id)
 
+                # Переопределяем closeEvent для окна пользователя
+                original_close_event = self.user_window.closeEvent
+
                 def custom_user_close_event(event):
-                    from PySide6.QtWidgets import QWidget
-                    QWidget.closeEvent(self.user_window, event)
+                    original_close_event(event)
                     self.show_main_window()
 
                 self.user_window.closeEvent = custom_user_close_event
@@ -493,7 +500,6 @@ class FlorariumWidget(QWidget):
 
     def show_simple_message(self, title, message, msg_type="info"):
         """Показать стилизованное сообщение"""
-        from app.welcome_dialog import SimpleMessageDialog
         dialog = SimpleMessageDialog(self, title, message, msg_type)
         dialog.exec()
 
